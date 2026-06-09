@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense Tracker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f6fa; color: #1a1a2e; min-height: 100vh; }
+
+  /* Header */
+  header { background: #1a1a2e; color: #fff; padding: 1.25rem 2rem; display: flex; align-items: center; gap: 1rem; }
+  header h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; }
+  header span.sub { font-size: 0.8rem; color: #a0a8c0; margin-left: auto; }
+
+  /* Summary bar */
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; padding: 1.5rem 2rem; background: #fff; border-bottom: 1px solid #e8eaf0; }
+  .stat { display: flex; flex-direction: column; gap: 0.25rem; }
+  .stat label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #7b82a0; }
+  .stat .val { font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+  .stat.danger .val { color: #d63031; }
+  .stat.warn .val { color: #e17055; }
+  .stat.ok .val { color: #00b894; }
+
+  /* Layout */
+  .main { display: grid; grid-template-columns: 360px 1fr; gap: 0; min-height: calc(100vh - 130px); }
+
+  /* Form panel */
+  .form-panel { background: #fff; border-right: 1px solid #e8eaf0; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+  .form-panel h2 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #7b82a0; margin-bottom: 0.25rem; }
+
+  .field { display: flex; flex-direction: column; gap: 0.4rem; }
+  .field label { font-size: 0.8rem; font-weight: 600; color: #444; }
+  .field input, .field select {
+    padding: 0.55rem 0.75rem; border: 1.5px solid #dde1ed; border-radius: 8px;
+    font-size: 0.9rem; background: #fafbff; color: #1a1a2e; outline: none; transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus { border-color: #6c5ce7; background: #fff; }
+
+  .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+  .method-btn {
+    padding: 0.5rem; border: 1.5px solid #dde1ed; border-radius: 8px;
+    font-size: 0.78rem; font-weight: 600; cursor: pointer; background: #fafbff;
+    color: #555; text-align: center; transition: all 0.15s; user-select: none;
+  }
+  .method-btn:hover { border-color: #6c5ce7; color: #6c5ce7; background: #f0eeff; }
+  .method-btn.active { border-color: #6c5ce7; background: #6c5ce7; color: #fff; }
+
+  .add-btn {
+    margin-top: 0.5rem; padding: 0.7rem; background: #1a1a2e; color: #fff;
+    border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; transition: background 0.15s; letter-spacing: 0.01em;
+  }
+  .add-btn:hover { background: #2d2d50; }
+
+  .divider { border: none; border-top: 1px solid #e8eaf0; margin: 0.25rem 0; }
+
+  /* Filter bar */
+  .filter-bar { padding: 1rem 1.5rem; border-bottom: 1px solid #e8eaf0; background: #fafbff; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .filter-bar input, .filter-bar select { padding: 0.45rem 0.75rem; border: 1.5px solid #dde1ed; border-radius: 8px; font-size: 0.82rem; background: #fff; color: #1a1a2e; outline: none; }
+  .filter-bar input:focus, .filter-bar select:focus { border-color: #6c5ce7; }
+  .filter-bar label { font-size: 0.78rem; color: #7b82a0; font-weight: 600; }
+
+  /* Table panel */
+  .table-panel { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  thead th {
+    padding: 0.8rem 1rem; text-align: left; font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; color: #7b82a0;
+    background: #fafbff; border-bottom: 1.5px solid #e8eaf0; white-space: nowrap;
+    cursor: pointer; user-select: none;
+  }
+  thead th:hover { color: #6c5ce7; }
+  thead th .sort-icon { margin-left: 4px; opacity: 0.4; }
+  thead th.sorted .sort-icon { opacity: 1; color: #6c5ce7; }
+
+  tbody tr { border-bottom: 1px solid #f0f2f8; transition: background 0.1s; }
+  tbody tr:hover { background: #fafbff; }
+  td { padding: 0.85rem 1rem; vertical-align: middle; }
+
+  .expense-name { font-weight: 600; color: #1a1a2e; }
+  .expense-amount { font-weight: 700; font-size: 0.95rem; color: #1a1a2e; font-variant-numeric: tabular-nums; }
+  .date-cell { font-size: 0.82rem; color: #555; }
+
+  .status-badge {
+    display: inline-block; padding: 0.25rem 0.65rem; border-radius: 20px;
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+  }
+  .badge-paid { background: #e0fff5; color: #00916e; }
+  .badge-overdue { background: #ffe5e5; color: #c0392b; }
+  .badge-pending { background: #fff4e0; color: #b8690a; }
+
+  .method-tag {
+    display: inline-block; padding: 0.2rem 0.55rem; border-radius: 6px;
+    font-size: 0.72rem; font-weight: 600; background: #eef0ff; color: #6c5ce7;
+  }
+
+  .del-btn {
+    background: none; border: none; cursor: pointer; color: #ccc;
+    font-size: 1rem; padding: 0.3rem; border-radius: 6px; transition: all 0.15s;
+  }
+  .del-btn:hover { color: #e74c3c; background: #ffe5e5; }
+
+  .empty-state { text-align: center; padding: 4rem 2rem; color: #a0a8c0; }
+  .empty-state .icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; }
+  .empty-state p { font-size: 0.9rem; }
+
+  .export-btn {
+    margin-left: auto; padding: 0.45rem 1rem; background: #fff; border: 1.5px solid #dde1ed;
+    border-radius: 8px; font-size: 0.8rem; font-weight: 600; color: #555; cursor: pointer; transition: all 0.15s;
+  }
+  .export-btn:hover { border-color: #6c5ce7; color: #6c5ce7; }
+
+  @media (max-width: 800px) {
+    .main { grid-template-columns: 1fr; }
+    .summary { grid-template-columns: repeat(2, 1fr); }
+    .form-panel { border-right: none; border-bottom: 1px solid #e8eaf0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" style="opacity:0.9"><rect x="2" y="3" width="18" height="16" rx="3" stroke="#fff" stroke-width="1.6"/><path d="M7 8h8M7 12h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><circle cx="16" cy="14" r="3.5" fill="#6c5ce7"/><path d="M16 12.8v1.2l.8.8" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg>
+  <h1>Business Expense Tracker</h1>
+  <span class="sub" id="last-updated"></span>
+</header>
+
+<!-- Summary -->
+<div class="summary">
+  <div class="stat"><label>Total expenses</label><div class="val" id="s-total">₹0.00</div></div>
+  <div class="stat ok"><label>Paid</label><div class="val" id="s-paid">₹0.00</div></div>
+  <div class="stat danger"><label>Overdue</label><div class="val" id="s-overdue">₹0.00</div></div>
+  <div class="stat warn"><label>Pending</label><div class="val" id="s-pending">₹0.00</div></div>
+</div>
+
+<div class="main">
+  <!-- Form -->
+  <div class="form-panel">
+    <h2>Add expense</h2>
+
+    <div class="field">
+      <label>Expense name *</label>
+      <input type="text" id="f-name" placeholder="e.g. Office rent, Software subscription">
+    </div>
+
+    <div class="field">
+      <label>Amount (₹) *</label>
+      <input type="number" id="f-amount" placeholder="0.00" min="0" step="0.01">
+    </div>
+
+    <div class="field">
+      <label>Due date *</label>
+      <input type="date" id="f-due">
+    </div>
+
+    <div class="field">
+      <label>Date paid <span style="color:#a0a8c0;font-weight:400">(leave blank if unpaid)</span></label>
+      <input type="date" id="f-paid">
+    </div>
+
+    <div class="field">
+      <label>Payment method *</label>
+      <div class="method-grid" id="method-grid">
+        <div class="method-btn" data-val="Cash">Cash</div>
+        <div class="method-btn" data-val="UPI">UPI</div>
+        <div class="method-btn" data-val="Card">Card</div>
+        <div class="method-btn" data-val="NEFT/RTGS">NEFT/RTGS</div>
+        <div class="method-btn" data-val="Cheque">Cheque</div>
+        <div class="method-btn" data-val="Other">Other</div>
+      </div>
+    </div>
+
+    <div class="field" id="other-field" style="display:none">
+      <label>Specify method</label>
+      <input type="text" id="f-other" placeholder="Enter payment method">
+    </div>
+
+    <hr class="divider">
+    <div id="form-error" style="font-size:0.8rem;color:#e74c3c;display:none;"></div>
+    <button class="add-btn" id="add-btn">+ Add expense</button>
+  </div>
+
+  <!-- Table side -->
+  <div style="display:flex;flex-direction:column;">
+    <div class="filter-bar">
+      <label>Filter:</label>
+      <input type="text" id="search" placeholder="Search by name…" style="width:170px">
+      <select id="filter-status">
+        <option value="">All statuses</option>
+        <option value="Paid">Paid</option>
+        <option value="Overdue">Overdue</option>
+        <option value="Pending">Pending</option>
+      </select>
+      <select id="filter-method">
+        <option value="">All methods</option>
+      </select>
+      <button class="export-btn" id="export-btn">⬇ Export CSV</button>
+    </div>
+
+    <div class="table-panel">
+      <table>
+        <thead>
+          <tr>
+            <th data-col="name">Name <span class="sort-icon">↕</span></th>
+            <th data-col="amount">Amount <span class="sort-icon">↕</span></th>
+            <th data-col="due">Due date <span class="sort-icon">↕</span></th>
+            <th data-col="paid">Date paid <span class="sort-icon">↕</span></th>
+            <th>Method</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="expense-body"></tbody>
+      </table>
+      <div class="empty-state" id="empty-state">
+        <div class="icon">📋</div>
+        <p>No expenses yet. Add your first expense using the form.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORE_KEY = 'biz_expenses_v1';
+let expenses = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+let selectedMethod = '';
+let sortCol = 'due', sortDir = 1;
+
+// Method selector
+document.getElementById('method-grid').addEventListener('click', e => {
+  const btn = e.target.closest('.method-btn');
+  if (!btn) return;
+  document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedMethod = btn.dataset.val;
+  document.getElementById('other-field').style.display = selectedMethod === 'Other' ? 'flex' : 'none';
+});
+
+// Sort
+document.querySelectorAll('thead th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
+    render();
+  });
+});
+
+// Add
+document.getElementById('add-btn').addEventListener('click', () => {
+  const name = document.getElementById('f-name').value.trim();
+  const amount = parseFloat(document.getElementById('f-amount').value);
+  const due = document.getElementById('f-due').value;
+  const paid = document.getElementById('f-paid').value;
+  const method = selectedMethod === 'Other'
+    ? (document.getElementById('f-other').value.trim() || 'Other')
+    : selectedMethod;
+
+  const err = document.getElementById('form-error');
+  if (!name || isNaN(amount) || amount <= 0 || !due || !method) {
+    err.textContent = 'Please fill in name, amount, due date and payment method.';
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+
+  expenses.push({ id: Date.now(), name, amount, due, paid, method });
+  save();
+  resetForm();
+  render();
+});
+
+function resetForm() {
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-amount').value = '';
+  document.getElementById('f-due').value = '';
+  document.getElementById('f-paid').value = '';
+  document.getElementById('f-other').value = '';
+  document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('other-field').style.display = 'none';
+  selectedMethod = '';
+}
+
+function save() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(expenses));
+  document.getElementById('last-updated').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+}
+
+function status(exp) {
+  if (exp.paid) return 'Paid';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const due = new Date(exp.due);
+  return due < today ? 'Overdue' : 'Pending';
+}
+
+function fmt(n) { return '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtDate(d) { if (!d) return '—'; const [y,m,day] = d.split('-'); return `${day}/${m}/${y}`; }
+
+function render() {
+  // Update method filter
+  const methods = [...new Set(expenses.map(e => e.method))];
+  const msel = document.getElementById('filter-method');
+  const curM = msel.value;
+  msel.innerHTML = '<option value="">All methods</option>' +
+    methods.map(m => `<option value="${m}"${m===curM?' selected':''}>${m}</option>`).join('');
+
+  const search = document.getElementById('search').value.toLowerCase();
+  const fStatus = document.getElementById('filter-status').value;
+  const fMethod = document.getElementById('filter-method').value;
+
+  let list = expenses.filter(e => {
+    const s = status(e);
+    return (
+      (!search || e.name.toLowerCase().includes(search)) &&
+      (!fStatus || s === fStatus) &&
+      (!fMethod || e.method === fMethod)
+    );
+  });
+
+  // Sort
+  list.sort((a, b) => {
+    let va = a[sortCol], vb = b[sortCol];
+    if (sortCol === 'amount') { va = a.amount; vb = b.amount; }
+    else if (sortCol === 'paid') { va = a.paid || ''; vb = b.paid || ''; }
+    if (va < vb) return -sortDir;
+    if (va > vb) return sortDir;
+    return 0;
+  });
+
+  // Update sort icons
+  document.querySelectorAll('thead th[data-col]').forEach(th => {
+    th.classList.toggle('sorted', th.dataset.col === sortCol);
+    const icon = th.querySelector('.sort-icon');
+    if (th.dataset.col === sortCol) icon.textContent = sortDir === 1 ? '↑' : '↓';
+    else icon.textContent = '↕';
+  });
+
+  const body = document.getElementById('expense-body');
+  if (list.length === 0) {
+    body.innerHTML = '';
+    document.getElementById('empty-state').style.display = 'block';
+  } else {
+    document.getElementById('empty-state').style.display = 'none';
+    body.innerHTML = list.map(e => {
+      const s = status(e);
+      const badgeClass = s === 'Paid' ? 'badge-paid' : s === 'Overdue' ? 'badge-overdue' : 'badge-pending';
+      return `<tr>
+        <td class="expense-name">${escHtml(e.name)}</td>
+        <td class="expense-amount">${fmt(e.amount)}</td>
+        <td class="date-cell">${fmtDate(e.due)}</td>
+        <td class="date-cell">${fmtDate(e.paid)}</td>
+        <td><span class="method-tag">${escHtml(e.method)}</span></td>
+        <td><span class="status-badge ${badgeClass}">${s}</span></td>
+        <td><button class="del-btn" data-id="${e.id}" title="Delete">✕</button></td>
+      </tr>`;
+    }).join('');
+
+    body.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        expenses = expenses.filter(e => e.id !== +btn.dataset.id);
+        save(); render();
+      });
+    });
+  }
+
+  // Summary (all expenses, not filtered)
+  const today = new Date(); today.setHours(0,0,0,0);
+  let total = 0, paid = 0, overdue = 0, pending = 0;
+  expenses.forEach(e => {
+    total += e.amount;
+    const s = status(e);
+    if (s === 'Paid') paid += e.amount;
+    else if (s === 'Overdue') overdue += e.amount;
+    else pending += e.amount;
+  });
+  document.getElementById('s-total').textContent = fmt(total);
+  document.getElementById('s-paid').textContent = fmt(paid);
+  document.getElementById('s-overdue').textContent = fmt(overdue);
+  document.getElementById('s-pending').textContent = fmt(pending);
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Filters live
+['search','filter-status','filter-method'].forEach(id => {
+  document.getElementById(id).addEventListener('input', render);
+});
+
+// CSV Export
+document.getElementById('export-btn').addEventListener('click', () => {
+  const rows = [['Name','Amount','Due Date','Date Paid','Method','Status']];
+  expenses.forEach(e => rows.push([
+    `"${e.name}"`, e.amount, e.due, e.paid || '', e.method, status(e)
+  ]));
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'expenses.csv';
+  a.click();
+});
+
+render();
+</script>
+</body>
+</html>
