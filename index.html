@@ -3,544 +3,1203 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Expense Tracker</title>
+<title>BizSuite</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f6fa; color: #1a1a2e; min-height: 100vh; }
+/* ─── RESET ─────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px;-webkit-text-size-adjust:100%}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#F0F2F5;color:#111827;min-height:100vh;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
 
-#auth-screen {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #1a1a2e 0%, #2d2d50 100%);
+/* ─── TOKENS ─────────────────────────────── */
+:root{
+  --brand:#F97316;
+  --brand-lt:#FFF7ED;
+  --brand-dk:#C2410C;
+  --top:#0D1117;
+  --top-border:rgba(255,255,255,0.06);
+  --surface:#FFFFFF;
+  --bg:#F0F2F5;
+  --border:#E5E7EB;
+  --border2:#D1D5DB;
+  --text:#111827;
+  --text2:#374151;
+  --muted:#6B7280;
+  --subtle:#9CA3AF;
+  --green:#059669;--green-bg:#D1FAE5;--green-text:#065F46;
+  --red:#DC2626;  --red-bg:#FEE2E2;  --red-text:#991B1B;
+  --amber:#D97706;--amber-bg:#FEF3C7;--amber-text:#92400E;
+  --blue:#2563EB; --blue-bg:#DBEAFE; --blue-text:#1E40AF;
+  --violet:#7C3AED;--violet-bg:#EDE9FE;--violet-text:#4C1D95;
+  --radius:10px;--radius-sm:6px;--radius-xs:4px;
+  --topbar-h:58px;
+  --shadow:0 1px 2px rgba(0,0,0,0.06),0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md:0 4px 20px rgba(0,0,0,0.10);
 }
-.auth-card {
-  background: #fff; border-radius: 16px; padding: 2.5rem; width: 100%; max-width: 400px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-}
-.auth-card .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
-.auth-card .logo span { font-size: 1.15rem; font-weight: 700; color: #1a1a2e; }
-.auth-tabs { display: flex; border-bottom: 2px solid #e8eaf0; margin-bottom: 1.5rem; }
-.auth-tab {
-  flex: 1; padding: 0.65rem; text-align: center; font-size: 0.85rem; font-weight: 600;
-  color: #a0a8c0; cursor: pointer; border-bottom: 2px solid transparent;
-  margin-bottom: -2px; transition: all 0.15s;
-}
-.auth-tab.active { color: #6c5ce7; border-bottom-color: #6c5ce7; }
-.auth-field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
-.auth-field label { font-size: 0.8rem; font-weight: 600; color: #444; }
-.auth-field input {
-  padding: 0.6rem 0.8rem; border: 1.5px solid #dde1ed; border-radius: 8px;
-  font-size: 0.9rem; color: #1a1a2e; outline: none; transition: border-color 0.15s;
-}
-.auth-field input:focus { border-color: #6c5ce7; }
-.auth-btn {
-  width: 100%; padding: 0.7rem; background: #6c5ce7; color: #fff;
-  border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
-  cursor: pointer; transition: background 0.15s; margin-top: 0.25rem;
-}
-.auth-btn:hover { background: #5a4bd1; }
-.auth-btn:disabled { background: #b2aef5; cursor: not-allowed; }
-.auth-error { font-size: 0.8rem; color: #e74c3c; margin-top: 0.75rem; text-align: center; min-height: 1rem; }
-.auth-success { font-size: 0.8rem; color: #00b894; margin-top: 0.75rem; text-align: center; }
 
-#app-screen { display: none; }
+/* ─── AUTH ─────────────────────────────── */
+#auth-screen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:var(--top);padding:1rem;
+}
+.auth-card{
+  background:var(--surface);border-radius:16px;padding:2.5rem;
+  width:100%;max-width:420px;box-shadow:var(--shadow-md);
+}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:2rem}
+.auth-logo-mark{
+  width:36px;height:36px;background:var(--brand);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.auth-logo-name{font-size:1.15rem;font-weight:800;color:var(--text);letter-spacing:-0.02em}
+.auth-logo-name em{font-style:normal;color:var(--brand)}
+.auth-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:1.75rem}
+.auth-tab{
+  flex:1;padding:.65rem;text-align:center;font-size:.83rem;font-weight:600;
+  color:var(--subtle);cursor:pointer;border-bottom:2.5px solid transparent;
+  margin-bottom:-2px;transition:color .15s,border-color .15s;
+}
+.auth-tab.on{color:var(--brand);border-color:var(--brand)}
+.auth-panel{display:none}.auth-panel.on{display:block}
+.f-row{margin-bottom:1rem}
+.f-row label{display:block;font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:.35rem}
+.f-row input{
+  width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  font-size:.88rem;color:var(--text);background:#FAFAFA;outline:none;transition:border-color .15s;
+}
+.f-row input:focus{border-color:var(--brand);background:#fff}
+.auth-btn{
+  width:100%;padding:.72rem;background:var(--brand);color:#fff;border:none;
+  border-radius:var(--radius-sm);font-size:.9rem;font-weight:700;
+  transition:background .15s;margin-top:.25rem;letter-spacing:.01em;
+}
+.auth-btn:hover{background:var(--brand-dk)}
+.auth-btn:disabled{opacity:.55;cursor:not-allowed}
+.auth-note{font-size:.75rem;text-align:center;margin-top:.85rem;min-height:1rem;color:var(--muted)}
+.auth-note.err{color:var(--red)}
+.auth-note.ok{color:var(--green)}
 
-header {
-  background: #1a1a2e; color: #fff; padding: 1.1rem 2rem;
-  display: flex; align-items: center; gap: 0.75rem;
-}
-header h1 { font-size: 1.1rem; font-weight: 600; }
-.user-pill {
-  margin-left: auto; display: flex; align-items: center; gap: 0.6rem;
-  font-size: 0.78rem; color: #a0a8c0;
-}
-.logout-btn {
-  padding: 0.35rem 0.85rem; background: transparent; border: 1px solid rgba(255,255,255,0.2);
-  color: #ccc; border-radius: 6px; font-size: 0.78rem; cursor: pointer; transition: all 0.15s;
-}
-.logout-btn:hover { border-color: #e74c3c; color: #e74c3c; }
+/* ─── APP SHELL ─────────────────────────────── */
+#app{display:none;min-height:100vh}
 
-.summary {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
-  padding: 1.25rem 2rem; background: #fff; border-bottom: 1px solid #e8eaf0;
+/* TOPBAR */
+.topbar{
+  position:fixed;top:0;left:0;right:0;height:var(--topbar-h);z-index:200;
+  background:var(--top);display:flex;align-items:center;padding:0 1.25rem;
+  gap:.75rem;border-bottom:1px solid var(--top-border);
 }
-.stat { display: flex; flex-direction: column; gap: 0.2rem; }
-.stat label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #7b82a0; }
-.stat .val { font-size: 1.3rem; font-weight: 700; color: #1a1a2e; }
-.stat.ok .val { color: #00b894; }
-.stat.danger .val { color: #d63031; }
-.stat.warn .val { color: #e17055; }
+.tbar-brand{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.tbar-mark{
+  width:28px;height:28px;background:var(--brand);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.tbar-name{font-size:.95rem;font-weight:800;color:#fff;letter-spacing:-.02em;white-space:nowrap}
+.tbar-name em{font-style:normal;color:var(--brand)}
 
-.main { display: grid; grid-template-columns: 340px 1fr; min-height: calc(100vh - 130px); }
+/* Desktop nav */
+.tbar-nav{display:flex;align-items:center;gap:2px;margin-left:2rem}
+.nav-btn{
+  display:flex;align-items:center;gap:6px;padding:.42rem .9rem;
+  font-size:.8rem;font-weight:500;color:#9CA3AF;border-radius:var(--radius-sm);
+  border:none;background:transparent;transition:color .15s,background .15s;
+  white-space:nowrap;
+}
+.nav-btn svg{flex-shrink:0;opacity:.7;transition:opacity .15s}
+.nav-btn:hover{color:#fff;background:rgba(255,255,255,.07)}
+.nav-btn:hover svg{opacity:1}
+.nav-btn.on{color:#fff;background:rgba(249,115,22,.18)}
+.nav-btn.on svg{opacity:1}
 
-.form-panel {
-  background: #fff; border-right: 1px solid #e8eaf0; padding: 1.5rem;
-  display: flex; flex-direction: column; gap: 0.9rem; overflow-y: auto;
+.tbar-right{margin-left:auto;display:flex;align-items:center;gap:.75rem}
+.user-av{
+  width:28px;height:28px;background:var(--brand);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:800;color:#fff;flex-shrink:0;
 }
-.form-panel h2 { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #7b82a0; }
-.field { display: flex; flex-direction: column; gap: 0.35rem; }
-.field label { font-size: 0.78rem; font-weight: 600; color: #444; }
-.field input, .field select {
-  padding: 0.52rem 0.72rem; border: 1.5px solid #dde1ed; border-radius: 8px;
-  font-size: 0.88rem; background: #fafbff; color: #1a1a2e; outline: none; transition: border-color 0.15s;
+.user-em{font-size:.72rem;color:#9CA3AF;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.signout{
+  padding:.33rem .75rem;background:transparent;border:1px solid rgba(255,255,255,.12);
+  color:#9CA3AF;border-radius:var(--radius-sm);font-size:.72rem;font-weight:600;
+  transition:border-color .15s,color .15s;
 }
-.field input:focus, .field select:focus { border-color: #6c5ce7; background: #fff; }
-.method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; }
-.method-btn {
-  padding: 0.45rem; border: 1.5px solid #dde1ed; border-radius: 8px;
-  font-size: 0.75rem; font-weight: 600; cursor: pointer; background: #fafbff;
-  color: #555; text-align: center; transition: all 0.15s; user-select: none;
-}
-.method-btn:hover { border-color: #6c5ce7; color: #6c5ce7; }
-.method-btn.active { border-color: #6c5ce7; background: #6c5ce7; color: #fff; }
-.add-btn {
-  padding: 0.68rem; background: #1a1a2e; color: #fff; border: none;
-  border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.15s;
-}
-.add-btn:hover { background: #2d2d50; }
-.add-btn:disabled { background: #999; cursor: not-allowed; }
-.divider { border: none; border-top: 1px solid #e8eaf0; }
-#form-error { font-size: 0.78rem; color: #e74c3c; display: none; }
+.signout:hover{border-color:#DC2626;color:#FCA5A5}
 
-.filter-bar {
-  padding: 0.9rem 1.5rem; border-bottom: 1px solid #e8eaf0;
-  background: #fafbff; display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap;
+/* Hamburger */
+.hamburger{
+  display:none;flex-direction:column;justify-content:center;gap:5px;
+  width:36px;height:36px;padding:6px;background:none;border:none;
 }
-.filter-bar input, .filter-bar select {
-  padding: 0.42rem 0.72rem; border: 1.5px solid #dde1ed; border-radius: 8px;
-  font-size: 0.8rem; background: #fff; color: #1a1a2e; outline: none;
-}
-.filter-bar input:focus, .filter-bar select:focus { border-color: #6c5ce7; }
-.filter-bar label { font-size: 0.76rem; color: #7b82a0; font-weight: 600; }
-.export-btn {
-  margin-left: auto; padding: 0.42rem 1rem; background: #fff; border: 1.5px solid #dde1ed;
-  border-radius: 8px; font-size: 0.78rem; font-weight: 600; color: #555; cursor: pointer; transition: all 0.15s;
-}
-.export-btn:hover { border-color: #6c5ce7; color: #6c5ce7; }
+.hamburger span{display:block;width:100%;height:2px;background:#9CA3AF;border-radius:2px;transition:all .22s}
+.hamburger.on span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.on span:nth-child(2){opacity:0;transform:scaleX(0)}
+.hamburger.on span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
 
-.table-panel { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
-thead th {
-  padding: 0.75rem 1rem; text-align: left; font-size: 0.7rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.06em; color: #7b82a0;
-  background: #fafbff; border-bottom: 1.5px solid #e8eaf0; white-space: nowrap;
-  cursor: pointer; user-select: none;
+/* Mobile drawer */
+.drawer{
+  display:none;position:fixed;top:var(--topbar-h);left:0;right:0;bottom:0;z-index:190;
+  background:var(--top);flex-direction:column;padding:1rem;gap:3px;
+  transform:translateX(-100%);transition:transform .24s cubic-bezier(.4,0,.2,1);
 }
-thead th:hover { color: #6c5ce7; }
-.sort-icon { margin-left: 3px; opacity: 0.4; }
-thead th.sorted .sort-icon { opacity: 1; color: #6c5ce7; }
-tbody tr { border-bottom: 1px solid #f0f2f8; transition: background 0.1s; }
-tbody tr:hover { background: #fafbff; }
-td { padding: 0.8rem 1rem; vertical-align: middle; }
-.expense-name { font-weight: 600; color: #1a1a2e; }
-.expense-amount { font-weight: 700; font-size: 0.92rem; font-variant-numeric: tabular-nums; }
-.date-cell { font-size: 0.8rem; color: #555; }
-.status-badge {
-  display: inline-block; padding: 0.22rem 0.6rem; border-radius: 20px;
-  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
+.drawer.on{transform:translateX(0)}
+.drawer .nav-btn{padding:.72rem 1rem;font-size:.88rem;border-radius:var(--radius)}
+.drawer-footer{margin-top:auto;padding-top:1rem;border-top:1px solid rgba(255,255,255,.07)}
+.drawer-user{display:flex;align-items:center;gap:10px;padding:.5rem 0;margin-bottom:.75rem}
+.drawer-signout{
+  width:100%;padding:.6rem;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.25);
+  color:#FCA5A5;border-radius:var(--radius-sm);font-size:.83rem;font-weight:600;
 }
-.badge-paid { background: #e0fff5; color: #00916e; }
-.badge-overdue { background: #ffe5e5; color: #c0392b; }
-.badge-pending { background: #fff4e0; color: #b8690a; }
-.method-tag {
-  display: inline-block; padding: 0.18rem 0.5rem; border-radius: 6px;
-  font-size: 0.7rem; font-weight: 600; background: #eef0ff; color: #6c5ce7;
-}
-.del-btn {
-  background: none; border: none; cursor: pointer; color: #ccc;
-  font-size: 0.9rem; padding: 0.3rem; border-radius: 6px; transition: all 0.15s;
-}
-.del-btn:hover { color: #e74c3c; background: #ffe5e5; }
-.empty-state { text-align: center; padding: 4rem 2rem; color: #a0a8c0; }
-.empty-state .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
-.loading-row td { text-align: center; color: #a0a8c0; padding: 2rem; font-size: 0.85rem; }
+.drawer-signout:hover{background:rgba(220,38,38,.2)}
 
-.toast {
-  position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 0.7rem 1.2rem;
-  background: #1a1a2e; color: #fff; border-radius: 8px; font-size: 0.83rem;
-  font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.2s;
-  pointer-events: none;
-}
-.toast.show { opacity: 1; }
+/* ─── PAGE WRAPPER ─────────────────────────────── */
+.app-body{margin-top:var(--topbar-h);padding:1.75rem 2rem;max-width:1300px;margin-left:auto;margin-right:auto}
+.page{display:none}.page.on{display:block}
+.pg-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.75rem;gap:1rem;flex-wrap:wrap}
+.pg-head-left h1{font-size:1.3rem;font-weight:800;color:var(--text);letter-spacing:-.02em}
+.pg-head-left p{font-size:.8rem;color:var(--muted);margin-top:3px}
 
-@media (max-width: 820px) {
-  .main { grid-template-columns: 1fr; }
-  .summary { grid-template-columns: repeat(2, 1fr); }
-  .form-panel { border-right: none; border-bottom: 1px solid #e8eaf0; }
-  header { padding: 1rem; }
+/* ─── SHARED COMPONENTS ─────────────────────────────── */
+
+/* Stat cards — left-border accent flash */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.kpi{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:1.2rem 1.3rem;border-left:4px solid var(--border);box-shadow:var(--shadow);
+  position:relative;
+}
+.kpi.k-orange{border-left-color:var(--brand)}
+.kpi.k-green{border-left-color:var(--green)}
+.kpi.k-red{border-left-color:var(--red)}
+.kpi.k-amber{border-left-color:var(--amber)}
+.kpi.k-blue{border-left-color:var(--blue)}
+.kpi.k-violet{border-left-color:var(--violet)}
+.kpi-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--subtle);margin-bottom:.45rem}
+.kpi-val{font-size:1.55rem;font-weight:800;color:var(--text);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpi-sub{font-size:.72rem;color:var(--muted);margin-top:.3rem}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-body{padding:1.4rem}
+.card-body.sm{padding:1.1rem 1.25rem}
+.card-title{font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:1rem}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:.18rem .6rem;border-radius:20px;font-size:.68rem;font-weight:700;letter-spacing:.03em;white-space:nowrap}
+.b-green{background:var(--green-bg);color:var(--green-text)}
+.b-red{background:var(--red-bg);color:var(--red-text)}
+.b-amber{background:var(--amber-bg);color:var(--amber-text)}
+.b-blue{background:var(--blue-bg);color:var(--blue-text)}
+.b-violet{background:var(--violet-bg);color:var(--violet-text)}
+.b-gray{background:#F3F4F6;color:var(--muted)}
+.b-orange{background:var(--brand-lt);color:var(--brand-dk)}
+
+/* Chip / method tag */
+.chip{display:inline-block;padding:.18rem .5rem;border-radius:var(--radius-xs);font-size:.68rem;font-weight:600;background:var(--brand-lt);color:var(--brand-dk)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:.55rem 1.1rem;border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;border:none;cursor:pointer;transition:background .15s,opacity .15s;white-space:nowrap}
+.btn-orange{background:var(--brand);color:#fff}.btn-orange:hover{background:var(--brand-dk)}
+.btn-orange:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border)}.btn-ghost:hover{border-color:var(--brand);color:var(--brand)}
+.btn-danger{background:var(--red-bg);color:var(--red);border:none}.btn-danger:hover{background:#FECACA}
+.btn-sm{padding:.32rem .7rem;font-size:.73rem}
+.btn-icon{padding:.35rem;background:transparent;border:none;color:var(--muted);border-radius:var(--radius-xs)}.btn-icon:hover{background:var(--border);color:var(--text)}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.83rem}
+thead th{
+  padding:.65rem 1rem;text-align:left;font-size:.67rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+  background:#FAFAFA;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;
+}
+thead th:hover{color:var(--brand)}
+thead th.sorted{color:var(--brand)}
+.sort-ic{margin-left:3px;opacity:.35;font-size:.65rem}
+.sorted .sort-ic{opacity:1}
+tbody tr{border-bottom:1px solid #F3F4F6;transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#FAFBFF}
+td{padding:.78rem 1rem;vertical-align:middle}
+td.fw{font-weight:600;color:var(--text)}
+td.num{font-variant-numeric:tabular-nums;font-weight:700}
+td.sm{font-size:.78rem;color:var(--text2)}
+
+/* Form */
+.fg-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.fg-grid.g3{grid-template-columns:1fr 1fr 1fr}
+.fg-grid.g1{grid-template-columns:1fr}
+.fg{display:flex;flex-direction:column;gap:.35rem}
+.fg.span2{grid-column:1/-1}
+.fg label{font-size:.75rem;font-weight:600;color:var(--text2)}
+.fg label em{font-weight:400;color:var(--subtle);font-style:normal}
+.fg input,.fg select,.fg textarea{
+  padding:.52rem .75rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  font-size:.86rem;background:#FAFAFA;color:var(--text);outline:none;transition:border-color .15s;
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--brand);background:#fff}
+.fg textarea{resize:vertical;min-height:72px}
+
+/* Method pills */
+.pills{display:flex;flex-wrap:wrap;gap:.4rem}
+.pill{
+  padding:.35rem .8rem;border:1.5px solid var(--border);border-radius:20px;
+  font-size:.73rem;font-weight:600;color:var(--muted);background:#FAFAFA;
+  cursor:pointer;transition:all .15s;user-select:none;
+}
+.pill:hover{border-color:var(--brand);color:var(--brand)}
+.pill.on{border-color:var(--brand);background:var(--brand);color:#fff}
+
+/* Filter row */
+.filter-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem}
+.filter-row input,.filter-row select{
+  padding:.45rem .72rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  font-size:.8rem;background:var(--surface);color:var(--text);outline:none;
+}
+.filter-row input:focus,.filter-row select:focus{border-color:var(--brand)}
+
+/* File drop */
+.file-drop{
+  border:2px dashed var(--border);border-radius:var(--radius);padding:1.4rem;
+  text-align:center;cursor:pointer;transition:all .15s;background:#FAFAFA;
+}
+.file-drop:hover,.file-drop.drag{border-color:var(--brand);background:var(--brand-lt)}
+.file-drop p{font-size:.8rem;color:var(--muted);margin-top:.3rem}
+.file-drop strong{color:var(--brand)}
+.file-drop input{display:none}
+.file-list{margin-top:.65rem;display:flex;flex-direction:column;gap:.35rem}
+.file-item{
+  display:flex;align-items:center;gap:.5rem;background:var(--brand-lt);
+  padding:.38rem .7rem;border-radius:var(--radius-sm);font-size:.75rem;color:var(--text2);
+}
+.file-item span.fn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-item .rm{background:none;border:none;color:var(--subtle);cursor:pointer;padding:0 2px;flex-shrink:0}
+.file-item .rm:hover{color:var(--red)}
+
+/* Inline form container */
+.inline-form{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:1.4rem;margin-bottom:1.25rem;box-shadow:var(--shadow);display:none;
+}
+.inline-form.on{display:block}
+.inline-form-title{font-size:.88rem;font-weight:700;margin-bottom:1.1rem;color:var(--text)}
+.form-err{font-size:.75rem;color:var(--red);margin-top:.5rem;display:none}
+.form-actions{display:flex;gap:.75rem;margin-top:1.1rem;align-items:center}
+
+/* Divider */
+hr.div{border:none;border-top:1px solid var(--border);margin:1.2rem 0}
+
+/* Empty state */
+.empty{text-align:center;padding:3rem 1rem;color:var(--subtle)}
+.empty-ico{font-size:2rem;margin-bottom:.5rem;opacity:.5}
+.empty p{font-size:.82rem}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;
+  padding:.65rem 1.15rem;border-radius:8px;font-size:.8rem;font-weight:600;
+  display:flex;align-items:center;gap:8px;opacity:0;transition:opacity .2s;pointer-events:none;
+}
+.toast.on{opacity:1}
+.toast-ok{background:#064E3B;color:#A7F3D0}
+.toast-err{background:#7F1D1D;color:#FCA5A5}
+
+/* ─── DASHBOARD ─────────────────────────────── */
+.dash-grid{display:grid;grid-template-columns:1fr 360px;gap:1.25rem;margin-top:0}
+.dash-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;box-shadow:var(--shadow)}
+.dash-chart-card h3{font-size:.83rem;font-weight:700;color:var(--text);margin-bottom:1rem}
+canvas{width:100%!important;max-height:210px}
+
+.recent-list{display:flex;flex-direction:column}
+.ri{display:flex;align-items:center;gap:.75rem;padding:.72rem 0;border-bottom:1px solid #F3F4F6}
+.ri:last-child{border-bottom:none}
+.ri-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ri-info{flex:1;min-width:0}
+.ri-name{font-size:.82rem;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ri-meta{font-size:.7rem;color:var(--muted)}
+.ri-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.ri-amt{font-size:.85rem;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+
+.gst-prog-list{display:flex;flex-direction:column;gap:.9rem}
+.gp-row{}
+.gp-hdr{display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.35rem}
+.gp-hdr b{font-weight:700;color:var(--text)}
+.gp-hdr span{color:var(--muted)}
+.prog-track{height:5px;background:#F3F4F6;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width .5s ease}
+
+/* ─── GST PAGE ─────────────────────────────── */
+.gst-summary{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem
+}
+
+/* ─── RESPONSIVE ─────────────────────────────── */
+@media(max-width:900px){
+  .tbar-nav{display:none}
+  .hamburger{display:flex}
+  .drawer{display:flex}
+  .user-em{display:none}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .dash-grid{grid-template-columns:1fr}
+  .fg-grid.g3{grid-template-columns:1fr 1fr}
+  .gst-summary{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:640px){
+  .app-body{padding:1.1rem}
+  .kpi-row{grid-template-columns:repeat(2,1fr);gap:.65rem}
+  .kpi-val{font-size:1.25rem}
+  .fg-grid{grid-template-columns:1fr}
+  .fg-grid.g3{grid-template-columns:1fr}
+  .pg-head{flex-direction:column;align-items:flex-start}
+  .gst-summary{grid-template-columns:repeat(2,1fr)}
+  .filter-row{gap:.4rem}
+  .filter-row input,.filter-row select{font-size:.76rem}
+}
+@media(max-width:400px){
+  .kpi-row{grid-template-columns:1fr 1fr}
+  .kpi{padding:.9rem 1rem}
 }
 </style>
 </head>
 <body>
 
-<!-- AUTH SCREEN -->
+<!-- ════════════════════ AUTH ════════════════════ -->
 <div id="auth-screen">
   <div class="auth-card">
-    <div class="logo">
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="#1a1a2e"/><path d="M7 10h14M7 14h9" stroke="#6c5ce7" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="18" r="4" fill="#6c5ce7"/><path d="M20 16.5v1.5l1 1" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg>
-      <span>Expense Tracker</span>
+    <div class="auth-logo">
+      <div class="auth-logo-mark">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+          <path d="M3 5h14M6 5V3h8v2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 5l1.5 12h7L15 5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="auth-logo-name">Biz<em>Suite</em></div>
     </div>
     <div class="auth-tabs">
-      <div class="auth-tab active" data-tab="login">Sign in</div>
+      <div class="auth-tab on" data-tab="login">Sign in</div>
       <div class="auth-tab" data-tab="signup">Create account</div>
     </div>
-    <div id="auth-login">
-      <div class="auth-field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
-      <div class="auth-field"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••"></div>
-      <button class="auth-btn" id="login-btn">Sign in</button>
+    <div class="auth-panel on" id="ap-login">
+      <div class="f-row"><label>Email</label><input type="email" id="l-em" placeholder="you@company.com" autocomplete="email"></div>
+      <div class="f-row"><label>Password</label><input type="password" id="l-pw" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="auth-btn" id="l-btn">Sign in</button>
     </div>
-    <div id="auth-signup" style="display:none">
-      <div class="auth-field"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com"></div>
-      <div class="auth-field"><label>Password</label><input type="password" id="signup-pass" placeholder="Min 6 characters"></div>
-      <button class="auth-btn" id="signup-btn">Create account</button>
+    <div class="auth-panel" id="ap-signup">
+      <div class="f-row"><label>Email</label><input type="email" id="s-em" placeholder="you@company.com" autocomplete="email"></div>
+      <div class="f-row"><label>Password</label><input type="password" id="s-pw" placeholder="Minimum 6 characters" autocomplete="new-password"></div>
+      <button class="auth-btn" id="s-btn">Create account</button>
     </div>
-    <div id="auth-msg" class="auth-error"></div>
+    <div class="auth-note" id="auth-note"></div>
   </div>
 </div>
 
-<!-- APP -->
-<div id="app-screen">
-  <header>
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="2" y="3" width="18" height="16" rx="3" stroke="#fff" stroke-width="1.6"/><path d="M7 8h8M7 12h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><circle cx="16" cy="14" r="3.5" fill="#6c5ce7"/><path d="M16 12.8v1.2l.8.8" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg>
-    <h1>Business Expense Tracker</h1>
-    <div class="user-pill">
-      <span id="user-email-display"></span>
-      <button class="logout-btn" id="logout-btn">Sign out</button>
+<!-- ════════════════════ APP ════════════════════ -->
+<div id="app">
+
+  <!-- Topbar -->
+  <nav class="topbar">
+    <div class="tbar-brand">
+      <div class="tbar-mark">
+        <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+          <path d="M3 5h14M6 5V3h8v2" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 5l1.5 12h7L15 5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="tbar-name">Biz<em>Suite</em></div>
     </div>
-  </header>
-
-  <div class="summary">
-    <div class="stat"><label>Total expenses</label><div class="val" id="s-total">₹0.00</div></div>
-    <div class="stat ok"><label>Paid</label><div class="val" id="s-paid">₹0.00</div></div>
-    <div class="stat danger"><label>Overdue</label><div class="val" id="s-overdue">₹0.00</div></div>
-    <div class="stat warn"><label>Pending</label><div class="val" id="s-pending">₹0.00</div></div>
-  </div>
-
-  <div class="main">
-    <div class="form-panel">
-      <h2>Add expense</h2>
-      <div class="field"><label>Expense name *</label><input type="text" id="f-name" placeholder="e.g. Office rent"></div>
-      <div class="field"><label>Amount (₹) *</label><input type="number" id="f-amount" placeholder="0.00" min="0" step="0.01"></div>
-      <div class="field"><label>Due date *</label><input type="date" id="f-due"></div>
-      <div class="field">
-        <label>Date paid <span style="color:#a0a8c0;font-weight:400">(leave blank if unpaid)</span></label>
-        <input type="date" id="f-paid">
-      </div>
-      <div class="field">
-        <label>Payment method *</label>
-        <div class="method-grid" id="method-grid">
-          <div class="method-btn" data-val="Cash">Cash</div>
-          <div class="method-btn" data-val="UPI">UPI</div>
-          <div class="method-btn" data-val="Card">Card</div>
-          <div class="method-btn" data-val="NEFT/RTGS">NEFT/RTGS</div>
-          <div class="method-btn" data-val="Cheque">Cheque</div>
-          <div class="method-btn" data-val="Other">Other</div>
-        </div>
-      </div>
-      <div class="field" id="other-field" style="display:none">
-        <label>Specify method</label>
-        <input type="text" id="f-other" placeholder="Enter payment method">
-      </div>
-      <hr class="divider">
-      <div id="form-error"></div>
-      <button class="add-btn" id="add-btn">+ Add expense</button>
+    <div class="tbar-nav" id="tbar-nav">
+      <button class="nav-btn on" data-page="dashboard">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="11" y="2" width="7" height="7" rx="1.5" fill="currentColor" opacity=".45"/><rect x="2" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity=".45"/><rect x="11" y="11" width="7" height="7" rx="1.5" fill="currentColor"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-btn" data-page="expenses">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 8.5h6M7 12h4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        Expenses
+      </button>
+      <button class="nav-btn" data-page="purchases">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M3 4h2l2.5 8h7.5l2-5H7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="16" r="1.3" fill="currentColor"/><circle cx="15" cy="16" r="1.3" fill="currentColor"/></svg>
+        Purchases
+      </button>
+      <button class="nav-btn" data-page="gst">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.7"/><path d="M10 6.5v4l2.5 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        GST Filing
+      </button>
     </div>
+    <div class="tbar-right">
+      <div class="user-av" id="u-av">U</div>
+      <div class="user-em" id="u-em"></div>
+      <button class="signout" id="signout">Sign out</button>
+      <button class="hamburger" id="hbg" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
 
-    <div style="display:flex;flex-direction:column;">
-      <div class="filter-bar">
-        <label>Filter:</label>
-        <input type="text" id="search" placeholder="Search by name…" style="width:160px">
-        <select id="filter-status">
-          <option value="">All statuses</option>
-          <option value="Paid">Paid</option>
-          <option value="Overdue">Overdue</option>
-          <option value="Pending">Pending</option>
-        </select>
-        <select id="filter-method"><option value="">All methods</option></select>
-        <button class="export-btn" id="export-btn">⬇ Export CSV</button>
+  <!-- Mobile drawer -->
+  <div class="drawer" id="drawer">
+    <button class="nav-btn" data-page="dashboard">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="11" y="2" width="7" height="7" rx="1.5" fill="currentColor" opacity=".45"/><rect x="2" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity=".45"/><rect x="11" y="11" width="7" height="7" rx="1.5" fill="currentColor"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-btn" data-page="expenses">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 8.5h6M7 12h4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Expenses
+    </button>
+    <button class="nav-btn" data-page="purchases">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M3 4h2l2.5 8h7.5l2-5H7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="16" r="1.3" fill="currentColor"/><circle cx="15" cy="16" r="1.3" fill="currentColor"/></svg>
+      Purchases
+    </button>
+    <button class="nav-btn" data-page="gst">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.7"/><path d="M10 6.5v4l2.5 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      GST Filing
+    </button>
+    <div class="drawer-footer">
+      <div class="drawer-user">
+        <div class="user-av" id="d-av">U</div>
+        <div style="font-size:.78rem;color:#9CA3AF;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1" id="d-em"></div>
       </div>
-      <div class="table-panel">
-        <table>
-          <thead>
-            <tr>
-              <th data-col="name">Name <span class="sort-icon">↕</span></th>
-              <th data-col="amount">Amount <span class="sort-icon">↕</span></th>
-              <th data-col="due_date">Due date <span class="sort-icon">↕</span></th>
-              <th data-col="paid_date">Date paid <span class="sort-icon">↕</span></th>
-              <th>Method</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="expense-body"></tbody>
-        </table>
-        <div class="empty-state" id="empty-state" style="display:none">
-          <div class="icon">📋</div>
-          <p>No expenses yet. Add your first expense using the form.</p>
-        </div>
-      </div>
+      <button class="drawer-signout" id="d-signout">Sign out</button>
     </div>
   </div>
-</div>
+
+  <!-- ════ PAGES ════ -->
+  <div class="app-body">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page on" id="pg-dashboard">
+      <div class="pg-head">
+        <div class="pg-head-left">
+          <h1>Dashboard</h1>
+          <p id="dash-sub">Business overview</p>
+        </div>
+      </div>
+
+      <div class="kpi-row" id="dash-kpis">
+        <div class="kpi k-orange"><div class="kpi-label">Total Expenses</div><div class="kpi-val" id="dk-exp">₹0</div><div class="kpi-sub">All time</div></div>
+        <div class="kpi k-green"><div class="kpi-label">Paid</div><div class="kpi-val" id="dk-paid">₹0</div><div class="kpi-sub">Cleared</div></div>
+        <div class="kpi k-red"><div class="kpi-label">Overdue</div><div class="kpi-val" id="dk-ovd">₹0</div><div class="kpi-sub">Past due</div></div>
+        <div class="kpi k-blue"><div class="kpi-label">Total Purchases</div><div class="kpi-val" id="dk-pur">₹0</div><div class="kpi-sub">All orders</div></div>
+      </div>
+
+      <div class="dash-grid">
+        <div style="display:flex;flex-direction:column;gap:1.25rem">
+          <div class="dash-chart-card">
+            <h3>Monthly Expenses — Last 6 months</h3>
+            <canvas id="dash-chart"></canvas>
+          </div>
+          <!-- Recent expenses -->
+          <div class="card">
+            <div class="card-body">
+              <div class="card-title">Recent Expenses</div>
+              <div id="dash-recent"><div class="empty"><div class="empty-ico">📋</div><p>No expenses yet</p></div></div>
+            </div>
+          </div>
+        </div>
+        <!-- Right column -->
+        <div style="display:flex;flex-direction:column;gap:1.25rem">
+          <div class="card">
+            <div class="card-body">
+              <div class="card-title">GST Filing Progress</div>
+              <div id="dash-gst-prog"><div style="font-size:.78rem;color:var(--muted);text-align:center;padding:.5rem 0">No filings recorded</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-body">
+              <div class="card-title">Purchase Breakdown</div>
+              <canvas id="pur-chart" style="max-height:180px"></canvas>
+              <div id="dash-pur-empty" style="display:none"><div class="empty"><div class="empty-ico">🛒</div><p>No purchases yet</p></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /dashboard -->
+
+    <!-- ── EXPENSES ── -->
+    <div class="page" id="pg-expenses">
+      <div class="pg-head">
+        <div class="pg-head-left"><h1>Expense Tracker</h1><p>Record and monitor all business expenses</p></div>
+        <button class="btn btn-orange" id="exp-open-btn">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+          Add Expense
+        </button>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi k-orange"><div class="kpi-label">Total</div><div class="kpi-val" id="ek-tot">₹0</div></div>
+        <div class="kpi k-green"><div class="kpi-label">Paid</div><div class="kpi-val" id="ek-paid">₹0</div></div>
+        <div class="kpi k-red"><div class="kpi-label">Overdue</div><div class="kpi-val" id="ek-ovd">₹0</div></div>
+        <div class="kpi k-amber"><div class="kpi-label">Pending</div><div class="kpi-val" id="ek-pend">₹0</div></div>
+      </div>
+
+      <!-- Inline form -->
+      <div class="inline-form" id="exp-form">
+        <div class="inline-form-title">New Expense</div>
+        <div class="fg-grid">
+          <div class="fg"><label>Expense name *</label><input type="text" id="ef-name" placeholder="e.g. Office rent, SaaS subscription"></div>
+          <div class="fg"><label>Amount (₹) *</label><input type="number" id="ef-amt" placeholder="0.00" min="0" step="0.01"></div>
+          <div class="fg"><label>Due date *</label><input type="date" id="ef-due"></div>
+          <div class="fg"><label>Date paid <em>(leave blank if unpaid)</em></label><input type="date" id="ef-paid"></div>
+        </div>
+        <div class="fg" style="margin-top:.85rem">
+          <label>Payment method *</label>
+          <div class="pills" id="exp-pills">
+            <div class="pill" data-v="Cash">Cash</div>
+            <div class="pill" data-v="UPI">UPI</div>
+            <div class="pill" data-v="Card">Card</div>
+            <div class="pill" data-v="NEFT/RTGS">NEFT / RTGS</div>
+            <div class="pill" data-v="Cheque">Cheque</div>
+            <div class="pill" data-v="Other">Other</div>
+          </div>
+        </div>
+        <div class="fg" id="ef-other-fg" style="display:none;margin-top:.75rem">
+          <label>Specify method</label><input type="text" id="ef-other" placeholder="e.g. Wallet, NetBanking">
+        </div>
+        <div class="form-err" id="ef-err"></div>
+        <div class="form-actions">
+          <button class="btn btn-orange" id="ef-save">Save Expense</button>
+          <button class="btn btn-ghost" id="ef-cancel">Cancel</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body sm">
+          <div class="filter-row">
+            <input type="text" id="ef-search" placeholder="Search expenses…" style="flex:1;min-width:130px">
+            <select id="ef-fs"><option value="">All statuses</option><option>Paid</option><option>Overdue</option><option>Pending</option></select>
+            <select id="ef-fm"><option value="">All methods</option></select>
+            <button class="btn btn-ghost btn-sm" id="ef-csv">⬇ CSV</button>
+          </div>
+          <div class="tbl-wrap">
+            <table id="exp-tbl">
+              <thead><tr>
+                <th data-c="name">Name<span class="sort-ic">↕</span></th>
+                <th data-c="amount">Amount<span class="sort-ic">↕</span></th>
+                <th data-c="due_date">Due<span class="sort-ic">↕</span></th>
+                <th data-c="paid_date">Paid on<span class="sort-ic">↕</span></th>
+                <th>Method</th><th>Status</th><th></th>
+              </tr></thead>
+              <tbody id="exp-tbody"></tbody>
+            </table>
+            <div class="empty" id="exp-empty" style="display:none"><div class="empty-ico">📋</div><p>No expenses found.</p></div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /expenses -->
+
+    <!-- ── PURCHASES ── -->
+    <div class="page" id="pg-purchases">
+      <div class="pg-head">
+        <div class="pg-head-left"><h1>Purchase Entry</h1><p>Log supplier orders and attach documents</p></div>
+        <button class="btn btn-orange" id="pur-open-btn">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+          New Purchase
+        </button>
+      </div>
+
+      <div class="kpi-row" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi k-blue"><div class="kpi-label">Total Spend</div><div class="kpi-val" id="pk-tot">₹0</div></div>
+        <div class="kpi k-green"><div class="kpi-label">Orders</div><div class="kpi-val" id="pk-cnt">0</div></div>
+        <div class="kpi k-amber"><div class="kpi-label">Avg. Order</div><div class="kpi-val" id="pk-avg">₹0</div></div>
+      </div>
+
+      <div class="inline-form" id="pur-form">
+        <div class="inline-form-title">New Purchase Order</div>
+        <div class="fg-grid g3">
+          <div class="fg"><label>Supplier name *</label><input type="text" id="pf-sup" placeholder="e.g. Raj Traders Pvt Ltd"></div>
+          <div class="fg"><label>Item / description *</label><input type="text" id="pf-item" placeholder="e.g. Raw material — Grade A"></div>
+          <div class="fg"><label>Category</label>
+            <select id="pf-cat"><option value="">Select…</option><option>Raw Material</option><option>Equipment</option><option>Packaging</option><option>Services</option><option>Office Supplies</option><option>Logistics</option><option>Other</option></select>
+          </div>
+          <div class="fg"><label>Quantity *</label><input type="number" id="pf-qty" placeholder="1" min="1"></div>
+          <div class="fg"><label>Unit price (₹) *</label><input type="number" id="pf-price" placeholder="0.00" min="0" step="0.01"></div>
+          <div class="fg"><label>GST % <em>(optional)</em></label><input type="number" id="pf-gst" placeholder="18" min="0" max="100"></div>
+          <div class="fg"><label>Purchase date *</label><input type="date" id="pf-date"></div>
+          <div class="fg"><label>Invoice / PO no.</label><input type="text" id="pf-inv" placeholder="INV-001"></div>
+          <div class="fg"><label>Status</label>
+            <select id="pf-status"><option>Ordered</option><option>Received</option><option>Partial</option><option>Cancelled</option></select>
+          </div>
+          <div class="fg span2"><label>Notes <em>(optional)</em></label><textarea id="pf-notes" placeholder="Additional details, delivery instructions…"></textarea></div>
+        </div>
+        <!-- File upload -->
+        <div class="fg" style="margin-top:.5rem">
+          <label>Attachments <em>(invoices, bills — PDF/JPG/PNG, max 5MB)</em></label>
+          <div class="file-drop" id="pf-drop">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="color:var(--muted);margin:0 auto">
+              <path d="M12 16V8m0 0-3.5 3.5M12 8l3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M20 16.5A3.5 3.5 0 0016.5 13H15a6 6 0 10-5.8 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <p><strong>Click to upload</strong> or drag & drop files here</p>
+            <input type="file" id="pf-file-in" multiple accept=".pdf,.jpg,.jpeg,.png">
+          </div>
+          <div class="file-list" id="pf-file-list"></div>
+        </div>
+        <div style="margin-top:.85rem;padding:.75rem;background:var(--brand-lt);border-radius:var(--radius-sm);font-size:.8rem;color:var(--brand-dk);font-weight:600;display:none" id="pf-total-preview"></div>
+        <div class="form-err" id="pf-err"></div>
+        <div class="form-actions">
+          <button class="btn btn-orange" id="pf-save">Save Purchase</button>
+          <button class="btn btn-ghost" id="pf-cancel">Cancel</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body sm">
+          <div class="filter-row">
+            <input type="text" id="pf-search" placeholder="Search supplier or item…" style="flex:1;min-width:130px">
+            <select id="pf-fcat"><option value="">All categories</option></select>
+            <select id="pf-fstat"><option value="">All statuses</option><option>Ordered</option><option>Received</option><option>Partial</option><option>Cancelled</option></select>
+            <button class="btn btn-ghost btn-sm" id="pf-csv">⬇ CSV</button>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr>
+                <th data-c="supplier_name">Supplier<span class="sort-ic">↕</span></th>
+                <th data-c="item_name">Item<span class="sort-ic">↕</span></th>
+                <th>Category</th>
+                <th data-c="quantity">Qty<span class="sort-ic">↕</span></th>
+                <th data-c="unit_price">Unit ₹<span class="sort-ic">↕</span></th>
+                <th data-c="total_amount">Total<span class="sort-ic">↕</span></th>
+                <th data-c="purchase_date">Date<span class="sort-ic">↕</span></th>
+                <th>Status</th><th></th>
+              </tr></thead>
+              <tbody id="pur-tbody"></tbody>
+            </table>
+            <div class="empty" id="pur-empty" style="display:none"><div class="empty-ico">🛒</div><p>No purchases yet.</p></div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /purchases -->
+
+    <!-- ── GST ── -->
+    <div class="page" id="pg-gst">
+      <div class="pg-head">
+        <div class="pg-head-left"><h1>GST Filing Tracker</h1><p>Monitor your GSTR compliance calendar</p></div>
+        <button class="btn btn-orange" id="gst-open-btn">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+          Add Filing
+        </button>
+      </div>
+
+      <div class="kpi-row gst-summary">
+        <div class="kpi k-green"><div class="kpi-label">Filed</div><div class="kpi-val" id="gk-filed">0</div></div>
+        <div class="kpi k-red"><div class="kpi-label">Overdue</div><div class="kpi-val" id="gk-ovd">0</div></div>
+        <div class="kpi k-amber"><div class="kpi-label">Pending</div><div class="kpi-val" id="gk-pend">0</div></div>
+        <div class="kpi k-blue"><div class="kpi-label">Tax Paid</div><div class="kpi-val" id="gk-tax">₹0</div></div>
+      </div>
+
+      <div class="inline-form" id="gst-form">
+        <div class="inline-form-title">New GST Filing Entry</div>
+        <div class="fg-grid g3">
+          <div class="fg"><label>Return type *</label>
+            <select id="gf-type"><option value="">Select…</option><option>GSTR-1</option><option>GSTR-2A</option><option>GSTR-2B</option><option>GSTR-3B</option><option>GSTR-9</option><option>GSTR-9C</option><option>CMP-08</option></select>
+          </div>
+          <div class="fg"><label>Filing period *</label><input type="month" id="gf-period"></div>
+          <div class="fg"><label>Due date *</label><input type="date" id="gf-due"></div>
+          <div class="fg"><label>Tax amount (₹)</label><input type="number" id="gf-tax" placeholder="0.00" min="0" step="0.01"></div>
+          <div class="fg"><label>CGST (₹)</label><input type="number" id="gf-cgst" placeholder="0.00" min="0" step="0.01"></div>
+          <div class="fg"><label>SGST (₹)</label><input type="number" id="gf-sgst" placeholder="0.00" min="0" step="0.01"></div>
+          <div class="fg"><label>IGST (₹)</label><input type="number" id="gf-igst" placeholder="0.00" min="0" step="0.01"></div>
+          <div class="fg"><label>ARN / Reference no.</label><input type="text" id="gf-arn" placeholder="ARN-XXXXXXXXXXXX"></div>
+          <div class="fg"><label>Status *</label>
+            <select id="gf-status"><option>Pending</option><option>Filed</option><option>Overdue</option><option>Under Review</option></select>
+          </div>
+          <div class="fg span2"><label>Remarks</label><textarea id="gf-rem" placeholder="Notes or remarks…" style="min-height:56px"></textarea></div>
+        </div>
+        <div class="form-err" id="gf-err"></div>
+        <div class="form-actions">
+          <button class="btn btn-orange" id="gf-save">Save Filing</button>
+          <button class="btn btn-ghost" id="gf-cancel">Cancel</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body sm">
+          <div class="filter-row">
+            <select id="gf-ftype"><option value="">All return types</option><option>GSTR-1</option><option>GSTR-2A</option><option>GSTR-2B</option><option>GSTR-3B</option><option>GSTR-9</option><option>GSTR-9C</option><option>CMP-08</option></select>
+            <select id="gf-fstat"><option value="">All statuses</option><option>Filed</option><option>Pending</option><option>Overdue</option><option>Under Review</option></select>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr>
+                <th>Return type</th><th>Period</th><th>Due date</th>
+                <th>Tax (₹)</th><th>CGST</th><th>SGST</th><th>IGST</th>
+                <th>ARN</th><th>Status</th><th></th>
+              </tr></thead>
+              <tbody id="gst-tbody"></tbody>
+            </table>
+            <div class="empty" id="gst-empty" style="display:none"><div class="empty-ico">🗂️</div><p>No GST filings recorded yet.</p></div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /gst -->
+
+  </div><!-- /app-body -->
+</div><!-- /app -->
 
 <div class="toast" id="toast"></div>
 
+<!-- ════════════════════ JS ════════════════════ -->
 <script>
-const SUPABASE_URL = 'https://kssrvcbgpmlqdnjbodym.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtzc3J2Y2JncG1scWRuamJvZHltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjIxNjYsImV4cCI6MjA5NjU5ODE2Nn0.MdT2FRxu-4fdxg1Xlucb_MDUBK9PGOn3GG6u8G4JCbk';
+'use strict';
+/* ── Supabase ── */
+const SB_URL='https://kssrvcbgpmlqdnjbodym.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtzc3J2Y2JncG1scWRuamJvZHltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMjIxNjYsImV4cCI6MjA5NjU5ODE2Nn0.MdT2FRxu-4fdxg1Xlucb_MDUBK9PGOn3GG6u8G4JCbk';
+const sb=supabase.createClient(SB_URL,SB_KEY);
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+/* ── State ── */
+let user=null;
+let exps=[],purs=[],gsts=[];
+let expSort={c:'due_date',d:1},purSort={c:'purchase_date',d:-1};
+let expMethod='',purFiles=[];
+let dChart=null,purDChart=null;
 
-let expenses = [];
-let selectedMethod = '';
-let sortCol = 'due_date', sortDir = 1;
-let currentUser = null;
+/* ── Helpers ── */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmt=n=>'₹'+(n||0).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0});
+const fmtD=d=>{if(!d)return'—';const[y,m,day]=(d+'').split('T')[0].split('-');return`${day}/${m}/${y}`};
+const fmtMon=s=>{if(!s)return'—';const[y,m]=s.split('-');return['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+' '+y};
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const expSt=e=>e.paid_date?'Paid':(new Date(e.due_date)<today()?'Overdue':'Pending');
 
-function showToast(msg, duration = 2600) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), duration);
+function badge(s){
+  const map={Paid:'b-green',Filed:'b-green',Received:'b-green',Ordered:'b-blue',
+             Partial:'b-amber',Pending:'b-amber',Overdue:'b-red',Cancelled:'b-gray','Under Review':'b-violet'};
+  return`<span class="badge ${map[s]||'b-gray'}">${s}</span>`;
 }
 
-function showAuth() {
-  document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('app-screen').style.display = 'none';
-}
-function showApp(user) {
-  currentUser = user;
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app-screen').style.display = 'block';
-  document.getElementById('user-email-display').textContent = user.email;
-  loadExpenses();
+function showToast(msg,ok=true){
+  const t=$('toast');t.textContent=msg;t.className=`toast on ${ok?'toast-ok':'toast-err'}`;
+  setTimeout(()=>t.classList.remove('on'),2700);
 }
 
-function setAuthMsg(msg, isError = true) {
-  const el = document.getElementById('auth-msg');
-  el.textContent = msg;
-  el.className = isError ? 'auth-error' : 'auth-success';
-}
-
-// Auth tabs
-document.querySelectorAll('.auth-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById('auth-login').style.display = tab.dataset.tab === 'login' ? 'block' : 'none';
-    document.getElementById('auth-signup').style.display = tab.dataset.tab === 'signup' ? 'block' : 'none';
-    document.getElementById('auth-msg').textContent = '';
+/* ── AUTH ── */
+document.querySelectorAll('.auth-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.auth-tab,.auth-panel').forEach(el=>el.classList.remove('on'));
+    tab.classList.add('on');
+    $('ap-'+tab.dataset.tab).classList.add('on');
+    $('auth-note').textContent='';$('auth-note').className='auth-note';
   });
 });
+function authMsg(m,ok=false){const e=$('auth-note');e.textContent=m;e.className='auth-note '+(ok?'ok':'err')}
 
-// Sign in
-document.getElementById('login-btn').addEventListener('click', async () => {
-  const email = document.getElementById('login-email').value.trim();
-  const pass  = document.getElementById('login-pass').value;
-  const btn   = document.getElementById('login-btn');
-  if (!email || !pass) { setAuthMsg('Please enter email and password.'); return; }
-  btn.disabled = true; btn.textContent = 'Signing in…';
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-  btn.disabled = false; btn.textContent = 'Sign in';
-  if (error) { setAuthMsg(error.message); return; }
-  showApp(data.user);
+$('l-btn').onclick=async()=>{
+  const em=$('l-em').value.trim(),pw=$('l-pw').value,btn=$('l-btn');
+  if(!em||!pw){authMsg('Enter email and password.');return}
+  btn.disabled=true;btn.textContent='Signing in…';
+  const{data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
+  btn.disabled=false;btn.textContent='Sign in';
+  if(error){authMsg(error.message);return}
+  boot(data.user);
+};
+$('s-btn').onclick=async()=>{
+  const em=$('s-em').value.trim(),pw=$('s-pw').value,btn=$('s-btn');
+  if(!em||!pw){authMsg('Enter email and password.');return}
+  if(pw.length<6){authMsg('Password must be at least 6 characters.');return}
+  btn.disabled=true;btn.textContent='Creating…';
+  const{data,error}=await sb.auth.signUp({email:em,password:pw});
+  btn.disabled=false;btn.textContent='Create account';
+  if(error){authMsg(error.message);return}
+  if(data.session)boot(data.user);
+  else authMsg('Check your email to confirm, then sign in.',true);
+};
+function doSignout(){sb.auth.signOut();exps=[];purs=[];gsts=[];$('app').style.display='none';$('auth-screen').style.display='flex';}
+$('signout').onclick=doSignout;$('d-signout').onclick=doSignout;
+
+/* ── BOOT ── */
+async function boot(u){
+  user=u;
+  $('auth-screen').style.display='none';$('app').style.display='block';
+  const initials=u.email.slice(0,2).toUpperCase();
+  $('u-av').textContent=initials;$('u-em').textContent=u.email;
+  $('d-av').textContent=initials;$('d-em').textContent=u.email;
+  $('dash-sub').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  await Promise.all([loadExps(),loadPurs(),loadGsts()]);
+  renderDash();renderExps();renderPurs();renderGsts();
+}
+
+/* ── NAV ── */
+function goTo(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
+  $('pg-'+page).classList.add('on');
+  document.querySelectorAll(`.nav-btn[data-page="${page}"]`).forEach(b=>b.classList.add('on'));
+  closeDrawer();window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>goTo(b.dataset.page)));
+
+const hbg=$('hbg'),drawer=$('drawer');
+function closeDrawer(){hbg.classList.remove('on');drawer.classList.remove('on')}
+hbg.onclick=()=>{hbg.classList.toggle('on');drawer.classList.toggle('on')};
+
+/* ═══════════════════════════
+   EXPENSES
+═══════════════════════════ */
+async function loadExps(){const{data}=await sb.from('expenses').select('*').order('created_at',{ascending:false});exps=data||[]}
+
+$('exp-open-btn').onclick=()=>{$('exp-form').classList.add('on');$('exp-open-btn').style.display='none'};
+$('ef-cancel').onclick=()=>{$('exp-form').classList.remove('on');$('exp-open-btn').style.display='';resetEF()};
+
+$('exp-pills').addEventListener('click',e=>{
+  const p=e.target.closest('.pill');if(!p)return;
+  $('exp-pills').querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));
+  p.classList.add('on');expMethod=p.dataset.v;
+  $('ef-other-fg').style.display=expMethod==='Other'?'flex':'none';
 });
 
-// Sign up
-document.getElementById('signup-btn').addEventListener('click', async () => {
-  const email = document.getElementById('signup-email').value.trim();
-  const pass  = document.getElementById('signup-pass').value;
-  const btn   = document.getElementById('signup-btn');
-  if (!email || !pass) { setAuthMsg('Please enter email and password.'); return; }
-  if (pass.length < 6) { setAuthMsg('Password must be at least 6 characters.'); return; }
-  btn.disabled = true; btn.textContent = 'Creating…';
-  const { data, error } = await sb.auth.signUp({ email, password: pass });
-  btn.disabled = false; btn.textContent = 'Create account';
-  if (error) { setAuthMsg(error.message); return; }
-  if (data.user && data.session) {
-    showApp(data.user);
-  } else {
-    setAuthMsg('Account created! Check your email to confirm, then sign in.', false);
-  }
-});
+$('ef-save').onclick=async()=>{
+  const name=$('ef-name').value.trim(),amount=parseFloat($('ef-amt').value),
+        due_date=$('ef-due').value,paid_date=$('ef-paid').value||null,
+        method=expMethod==='Other'?($('ef-other').value.trim()||'Other'):expMethod;
+  const e=$('ef-err');
+  if(!name||isNaN(amount)||amount<=0||!due_date||!method){e.textContent='Fill in name, amount, due date and payment method.';e.style.display='block';return}
+  e.style.display='none';
+  const btn=$('ef-save');btn.disabled=true;btn.textContent='Saving…';
+  const{data,error}=await sb.from('expenses').insert([{user_id:user.id,name,amount,due_date,paid_date,method}]).select().single();
+  btn.disabled=false;btn.textContent='Save Expense';
+  if(error){showToast('Error: '+error.message,false);return}
+  exps.unshift(data);resetEF();$('exp-form').classList.remove('on');$('exp-open-btn').style.display='';
+  renderExps();renderDash();showToast('Expense added ✓');
+};
 
-// Sign out
-document.getElementById('logout-btn').addEventListener('click', async () => {
-  await sb.auth.signOut();
-  expenses = [];
-  showAuth();
-});
+function resetEF(){
+  ['ef-name','ef-amt','ef-due','ef-paid','ef-other'].forEach(id=>$(id).value='');
+  $('exp-pills').querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));
+  $('ef-other-fg').style.display='none';$('ef-err').style.display='none';expMethod='';
+}
 
-// Method selector
-document.getElementById('method-grid').addEventListener('click', e => {
-  const btn = e.target.closest('.method-btn');
-  if (!btn) return;
-  document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  selectedMethod = btn.dataset.val;
-  document.getElementById('other-field').style.display = selectedMethod === 'Other' ? 'flex' : 'none';
-});
+async function delExp(id){
+  if(!confirm('Delete this expense?'))return;
+  const{error}=await sb.from('expenses').delete().eq('id',id);
+  if(error){showToast('Error: '+error.message,false);return}
+  exps=exps.filter(e=>e.id!==id);renderExps();renderDash();showToast('Deleted');
+}
 
-// Sort headers
-document.querySelectorAll('thead th[data-col]').forEach(th => {
-  th.addEventListener('click', () => {
-    const col = th.dataset.col;
-    if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
-    render();
+// Sort clicks
+$('exp-tbl').querySelectorAll('thead th[data-c]').forEach(th=>{
+  th.addEventListener('click',()=>{
+    expSort=expSort.c===th.dataset.c?{c:expSort.c,d:expSort.d*-1}:{c:th.dataset.c,d:1};
+    renderExps();
   });
 });
+['ef-search','ef-fs','ef-fm'].forEach(id=>$(id).addEventListener('input',renderExps));
 
-// Load
-async function loadExpenses() {
-  const body = document.getElementById('expense-body');
-  body.innerHTML = '<tr class="loading-row"><td colspan="7">Loading expenses…</td></tr>';
-  document.getElementById('empty-state').style.display = 'none';
-  const { data, error } = await sb.from('expenses').select('*').order('created_at', { ascending: false });
-  if (error) { showToast('Error loading: ' + error.message, 4000); body.innerHTML = ''; return; }
-  expenses = data || [];
-  render();
-}
+function renderExps(){
+  // Refresh method dropdown
+  const methods=[...new Set(exps.map(e=>e.method))];
+  const msel=$('ef-fm');const cv=msel.value;
+  msel.innerHTML='<option value="">All methods</option>'+methods.map(m=>`<option${m===cv?' selected':''}>${esc(m)}</option>`).join('');
 
-// Add
-document.getElementById('add-btn').addEventListener('click', async () => {
-  const name     = document.getElementById('f-name').value.trim();
-  const amount   = parseFloat(document.getElementById('f-amount').value);
-  const due_date = document.getElementById('f-due').value;
-  const paid_date= document.getElementById('f-paid').value || null;
-  const method   = selectedMethod === 'Other'
-    ? (document.getElementById('f-other').value.trim() || 'Other')
-    : selectedMethod;
-
-  const errEl = document.getElementById('form-error');
-  if (!name || isNaN(amount) || amount <= 0 || !due_date || !method) {
-    errEl.textContent = 'Please fill in name, amount, due date and payment method.';
-    errEl.style.display = 'block'; return;
-  }
-  errEl.style.display = 'none';
-
-  const btn = document.getElementById('add-btn');
-  btn.disabled = true; btn.textContent = 'Saving…';
-
-  const { data, error } = await sb.from('expenses')
-    .insert([{ user_id: currentUser.id, name, amount, due_date, paid_date, method }])
-    .select().single();
-
-  btn.disabled = false; btn.textContent = '+ Add expense';
-  if (error) { showToast('Error: ' + error.message, 4000); return; }
-  expenses.unshift(data);
-  resetForm();
-  render();
-  showToast('Expense added ✓');
-});
-
-// Delete
-async function deleteExpense(id) {
-  const { error } = await sb.from('expenses').delete().eq('id', id);
-  if (error) { showToast('Error deleting: ' + error.message, 4000); return; }
-  expenses = expenses.filter(e => e.id !== id);
-  render();
-  showToast('Deleted');
-}
-
-function resetForm() {
-  ['f-name','f-amount','f-due','f-paid','f-other'].forEach(id => document.getElementById(id).value = '');
-  document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('other-field').style.display = 'none';
-  selectedMethod = '';
-}
-
-function expStatus(exp) {
-  if (exp.paid_date) return 'Paid';
-  const today = new Date(); today.setHours(0,0,0,0);
-  return new Date(exp.due_date) < today ? 'Overdue' : 'Pending';
-}
-
-function fmt(n) { return '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-function fmtDate(d) { if (!d) return '—'; const [y,m,day] = d.split('T')[0].split('-'); return `${day}/${m}/${y}`; }
-function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function render() {
-  const methods = [...new Set(expenses.map(e => e.method))];
-  const msel = document.getElementById('filter-method');
-  const curM = msel.value;
-  msel.innerHTML = '<option value="">All methods</option>' +
-    methods.map(m => `<option value="${m}"${m===curM?' selected':''}>${escHtml(m)}</option>`).join('');
-
-  const search  = document.getElementById('search').value.toLowerCase();
-  const fStatus = document.getElementById('filter-status').value;
-  const fMethod = document.getElementById('filter-method').value;
-
-  let list = expenses.filter(e =>
-    (!search  || e.name.toLowerCase().includes(search)) &&
-    (!fStatus || expStatus(e) === fStatus) &&
-    (!fMethod || e.method === fMethod)
+  const q=$('ef-search').value.toLowerCase(),fs=$('ef-fs').value,fm=$('ef-fm').value;
+  let list=exps.filter(e=>
+    (!q||e.name.toLowerCase().includes(q))&&(!fs||expSt(e)===fs)&&(!fm||e.method===fm)
   );
-
-  list.sort((a, b) => {
-    let va = sortCol === 'amount' ? a.amount : (a[sortCol] || '');
-    let vb = sortCol === 'amount' ? b.amount : (b[sortCol] || '');
-    return va < vb ? -sortDir : va > vb ? sortDir : 0;
+  list.sort((a,b)=>{
+    let va=expSort.c==='amount'?a.amount:(a[expSort.c]||'');
+    let vb=expSort.c==='amount'?b.amount:(b[expSort.c]||'');
+    return va<vb?-expSort.d:va>vb?expSort.d:0;
   });
-
-  document.querySelectorAll('thead th[data-col]').forEach(th => {
-    th.classList.toggle('sorted', th.dataset.col === sortCol);
-    th.querySelector('.sort-icon').textContent =
-      th.dataset.col === sortCol ? (sortDir === 1 ? '↑' : '↓') : '↕';
+  $('exp-tbl').querySelectorAll('thead th[data-c]').forEach(th=>{
+    th.classList.toggle('sorted',th.dataset.c===expSort.c);
+    th.querySelector('.sort-ic').textContent=th.dataset.c===expSort.c?(expSort.d===1?'↑':'↓'):'↕';
   });
+  const tbody=$('exp-tbody'),empty=$('exp-empty');
+  empty.style.display=list.length===0?'block':'none';
+  tbody.innerHTML=list.map(e=>`<tr>
+    <td class="fw">${esc(e.name)}</td>
+    <td class="num">${fmt(e.amount)}</td>
+    <td class="sm">${fmtD(e.due_date)}</td>
+    <td class="sm">${fmtD(e.paid_date)}</td>
+    <td><span class="chip">${esc(e.method)}</span></td>
+    <td>${badge(expSt(e))}</td>
+    <td><button class="btn btn-icon btn-sm" onclick="delExp('${e.id}')" title="Delete" style="color:var(--muted)">✕</button></td>
+  </tr>`).join('');
 
-  const body = document.getElementById('expense-body');
-  document.getElementById('empty-state').style.display = list.length === 0 && expenses.length === 0 ? 'block' : 'none';
-
-  body.innerHTML = list.length === 0 && expenses.length > 0
-    ? `<tr><td colspan="7" style="text-align:center;padding:2rem;color:#a0a8c0;font-size:0.85rem">No results match your filters.</td></tr>`
-    : list.map(e => {
-        const s  = expStatus(e);
-        const bc = s === 'Paid' ? 'badge-paid' : s === 'Overdue' ? 'badge-overdue' : 'badge-pending';
-        return `<tr>
-          <td class="expense-name">${escHtml(e.name)}</td>
-          <td class="expense-amount">${fmt(e.amount)}</td>
-          <td class="date-cell">${fmtDate(e.due_date)}</td>
-          <td class="date-cell">${fmtDate(e.paid_date)}</td>
-          <td><span class="method-tag">${escHtml(e.method)}</span></td>
-          <td><span class="status-badge ${bc}">${s}</span></td>
-          <td><button class="del-btn" data-id="${e.id}" title="Delete">✕</button></td>
-        </tr>`;
-      }).join('');
-
-  body.querySelectorAll('.del-btn').forEach(btn =>
-    btn.addEventListener('click', () => deleteExpense(btn.dataset.id))
-  );
-
-  // Summary totals (all records, not filtered)
-  let total=0, paid=0, overdue=0, pending=0;
-  expenses.forEach(e => {
-    total += e.amount;
-    const s = expStatus(e);
-    if (s === 'Paid') paid += e.amount;
-    else if (s === 'Overdue') overdue += e.amount;
-    else pending += e.amount;
-  });
-  document.getElementById('s-total').textContent    = fmt(total);
-  document.getElementById('s-paid').textContent     = fmt(paid);
-  document.getElementById('s-overdue').textContent  = fmt(overdue);
-  document.getElementById('s-pending').textContent  = fmt(pending);
+  let tot=0,paid=0,ovd=0,pend=0;
+  exps.forEach(e=>{tot+=e.amount;const s=expSt(e);if(s==='Paid')paid+=e.amount;else if(s==='Overdue')ovd+=e.amount;else pend+=e.amount;});
+  $('ek-tot').textContent=fmt(tot);$('ek-paid').textContent=fmt(paid);
+  $('ek-ovd').textContent=fmt(ovd);$('ek-pend').textContent=fmt(pend);
 }
 
-['search','filter-status','filter-method'].forEach(id =>
-  document.getElementById(id).addEventListener('input', render)
-);
+$('ef-csv').onclick=()=>{
+  dlCsv([['Name','Amount','Due','Paid','Method','Status'],
+    ...exps.map(e=>[`"${e.name}"`,e.amount,e.due_date,e.paid_date||'',e.method,expSt(e)])],
+  'expenses.csv');
+};
 
-document.getElementById('export-btn').addEventListener('click', () => {
-  const rows = [['Name','Amount','Due Date','Date Paid','Method','Status']];
-  expenses.forEach(e => rows.push([`"${e.name}"`, e.amount, e.due_date, e.paid_date||'', e.method, expStatus(e)]));
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([rows.map(r=>r.join(',')).join('\n')], {type:'text/csv'}));
-  a.download = 'expenses.csv'; a.click();
-});
+/* ═══════════════════════════
+   PURCHASES
+═══════════════════════════ */
+async function loadPurs(){const{data}=await sb.from('purchases').select('*').order('created_at',{ascending:false});purs=data||[]}
 
-// Init — restore session if exists
-(async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) showApp(session.user);
-  else showAuth();
+$('pur-open-btn').onclick=()=>{
+  $('pur-form').classList.add('on');$('pur-open-btn').style.display='none';
+  $('pf-date').value=new Date().toISOString().split('T')[0];
+};
+$('pf-cancel').onclick=()=>{$('pur-form').classList.remove('on');$('pur-open-btn').style.display='';resetPF()};
+
+// File drop
+const drop=$('pf-drop');
+drop.onclick=()=>$('pf-file-in').click();
+drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag')});
+drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));
+drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('drag');addFiles(e.dataTransfer.files)});
+$('pf-file-in').onchange=e=>addFiles(e.target.files);
+
+function addFiles(fl){
+  Array.from(fl).forEach(f=>{
+    if(f.size>5*1024*1024){showToast(`${f.name} exceeds 5 MB`,false);return}
+    purFiles.push(f);
+  });renderFileList();
+}
+function renderFileList(){
+  $('pf-file-list').innerHTML=purFiles.map((f,i)=>`
+    <div class="file-item">
+      <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M5 3h7l4 4v10a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="var(--brand-dk)" stroke-width="1.6"/><path d="M12 3v4h4" stroke="var(--brand-dk)" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <span class="fn">${esc(f.name)}</span>
+      <span style="color:var(--subtle);flex-shrink:0">${(f.size/1024).toFixed(0)}KB</span>
+      <button class="rm" onclick="removeFile(${i})">✕</button>
+    </div>`).join('');
+}
+window.removeFile=i=>{purFiles.splice(i,1);renderFileList()};
+
+// Live total preview
+function calcTotal(){
+  const qty=parseFloat($('pf-qty').value)||0,price=parseFloat($('pf-price').value)||0,gp=parseFloat($('pf-gst').value)||0;
+  const sub=qty*price,tot=sub*(1+gp/100);
+  const prev=$('pf-total-preview');
+  if(sub>0){prev.style.display='block';prev.textContent=`Total: ${fmt(tot)} (${qty} × ${fmt(price)}${gp?` + ${gp}% GST`:''})`;
+  }else prev.style.display='none';
+  return tot;
+}
+['pf-qty','pf-price','pf-gst'].forEach(id=>$(id).addEventListener('input',calcTotal));
+
+$('pf-save').onclick=async()=>{
+  const sup=$('pf-sup').value.trim(),item=$('pf-item').value.trim(),
+        qty=parseFloat($('pf-qty').value),price=parseFloat($('pf-price').value),
+        date=$('pf-date').value;
+  const e=$('pf-err');
+  if(!sup||!item||isNaN(qty)||qty<=0||isNaN(price)||price<=0||!date){
+    e.textContent='Fill in supplier, item, quantity, price and date.';e.style.display='block';return;
+  }
+  e.style.display='none';
+  const gp=parseFloat($('pf-gst').value)||0;
+  const total_amount=qty*price*(1+gp/100);
+  const btn=$('pf-save');btn.disabled=true;btn.textContent='Saving…';
+  const{data,error}=await sb.from('purchases').insert([{
+    user_id:user.id,supplier_name:sup,item_name:item,
+    category:$('pf-cat').value,quantity:qty,unit_price:price,
+    gst_percent:gp,total_amount,purchase_date:date,
+    invoice_no:$('pf-inv').value.trim(),status:$('pf-status').value,
+    notes:$('pf-notes').value.trim(),
+    file_names:JSON.stringify(purFiles.map(f=>f.name))
+  }]).select().single();
+  btn.disabled=false;btn.textContent='Save Purchase';
+  if(error){showToast('Error: '+error.message,false);return}
+  purs.unshift(data);resetPF();$('pur-form').classList.remove('on');$('pur-open-btn').style.display='';
+  renderPurs();renderDash();showToast('Purchase saved ✓');
+};
+
+function resetPF(){
+  ['pf-sup','pf-item','pf-qty','pf-price','pf-gst','pf-inv','pf-notes'].forEach(id=>$(id).value='');
+  $('pf-cat').value='';$('pf-status').value='Ordered';$('pf-date').value='';
+  $('pf-total-preview').style.display='none';$('pf-err').style.display='none';
+  purFiles=[];renderFileList();
+}
+
+async function delPur(id){
+  if(!confirm('Delete this purchase?'))return;
+  const{error}=await sb.from('purchases').delete().eq('id',id);
+  if(error){showToast('Error: '+error.message,false);return}
+  purs=purs.filter(p=>p.id!==id);renderPurs();renderDash();showToast('Deleted');
+}
+
+['pf-search','pf-fcat','pf-fstat'].forEach(id=>$(id).addEventListener('input',renderPurs));
+
+function renderPurs(){
+  const cats=[...new Set(purs.map(p=>p.category).filter(Boolean))];
+  const csel=$('pf-fcat');const cc=csel.value;
+  csel.innerHTML='<option value="">All categories</option>'+cats.map(c=>`<option${c===cc?' selected':''}>${esc(c)}</option>`).join('');
+
+  const q=$('pf-search').value.toLowerCase(),fc=$('pf-fcat').value,fs=$('pf-fstat').value;
+  let list=purs.filter(p=>
+    (!q||p.supplier_name.toLowerCase().includes(q)||(p.item_name||'').toLowerCase().includes(q))&&
+    (!fc||p.category===fc)&&(!fs||p.status===fs)
+  );
+  list.sort((a,b)=>{let va=a[purSort.c]||'',vb=b[purSort.c]||'';return va<vb?-purSort.d:va>vb?purSort.d:0});
+  const tbody=$('pur-tbody'),empty=$('pur-empty');
+  empty.style.display=list.length===0?'block':'none';
+  tbody.innerHTML=list.map(p=>`<tr>
+    <td class="fw">${esc(p.supplier_name)}</td>
+    <td>${esc(p.item_name)}</td>
+    <td><span class="chip" style="background:#F3F4F6;color:var(--muted)">${esc(p.category||'—')}</span></td>
+    <td>${p.quantity}</td>
+    <td class="num" style="font-weight:500">${fmt(p.unit_price)}</td>
+    <td class="num">${fmt(p.total_amount)}</td>
+    <td class="sm">${fmtD(p.purchase_date)}</td>
+    <td>${badge(p.status)}</td>
+    <td><button class="btn btn-icon btn-sm" onclick="delPur('${p.id}')" title="Delete" style="color:var(--muted)">✕</button></td>
+  </tr>`).join('');
+
+  let tot=0;purs.forEach(p=>tot+=p.total_amount||0);
+  $('pk-tot').textContent=fmt(tot);$('pk-cnt').textContent=purs.length;
+  $('pk-avg').textContent=purs.length?fmt(tot/purs.length):'₹0';
+}
+
+$('pf-csv').onclick=()=>{
+  dlCsv([['Supplier','Item','Category','Qty','Unit Price','Total','GST%','Date','Invoice','Status'],
+    ...purs.map(p=>[`"${p.supplier_name}"`,`"${p.item_name}"`,p.category||'',p.quantity,p.unit_price,p.total_amount,p.gst_percent||0,p.purchase_date,p.invoice_no||'',p.status])],
+  'purchases.csv');
+};
+
+/* ═══════════════════════════
+   GST FILINGS
+═══════════════════════════ */
+async function loadGsts(){const{data}=await sb.from('gst_filings').select('*').order('period',{ascending:false});gsts=data||[]}
+
+$('gst-open-btn').onclick=()=>{$('gst-form').classList.add('on');$('gst-open-btn').style.display='none'};
+$('gf-cancel').onclick=()=>{$('gst-form').classList.remove('on');$('gst-open-btn').style.display='';resetGF()};
+
+$('gf-save').onclick=async()=>{
+  const rt=$('gf-type').value,period=$('gf-period').value,due=$('gf-due').value,status=$('gf-status').value;
+  const e=$('gf-err');
+  if(!rt||!period||!due){e.textContent='Return type, period and due date are required.';e.style.display='block';return}
+  e.style.display='none';
+  const btn=$('gf-save');btn.disabled=true;btn.textContent='Saving…';
+  const{data,error}=await sb.from('gst_filings').insert([{
+    user_id:user.id,return_type:rt,period,due_date:due,status,
+    tax_amount:parseFloat($('gf-tax').value)||0,
+    cgst:parseFloat($('gf-cgst').value)||0,
+    sgst:parseFloat($('gf-sgst').value)||0,
+    igst:parseFloat($('gf-igst').value)||0,
+    arn:$('gf-arn').value.trim(),
+    remarks:$('gf-rem').value.trim()
+  }]).select().single();
+  btn.disabled=false;btn.textContent='Save Filing';
+  if(error){showToast('Error: '+error.message,false);return}
+  gsts.unshift(data);resetGF();$('gst-form').classList.remove('on');$('gst-open-btn').style.display='';
+  renderGsts();renderDash();showToast('Filing saved ✓');
+};
+
+function resetGF(){
+  ['gf-type','gf-period','gf-due','gf-tax','gf-cgst','gf-sgst','gf-igst','gf-arn','gf-rem'].forEach(id=>$(id).value='');
+  $('gf-status').value='Pending';$('gf-err').style.display='none';
+}
+
+async function delGst(id){
+  if(!confirm('Delete this filing?'))return;
+  const{error}=await sb.from('gst_filings').delete().eq('id',id);
+  if(error){showToast('Error: '+error.message,false);return}
+  gsts=gsts.filter(g=>g.id!==id);renderGsts();renderDash();showToast('Deleted');
+}
+
+['gf-ftype','gf-fstat'].forEach(id=>$(id).addEventListener('input',renderGsts));
+
+function renderGsts(){
+  const ft=$('gf-ftype').value,fs=$('gf-fstat').value;
+  let list=gsts.filter(g=>(!ft||g.return_type===ft)&&(!fs||g.status===fs));
+  const tbody=$('gst-tbody'),empty=$('gst-empty');
+  empty.style.display=list.length===0?'block':'none';
+  tbody.innerHTML=list.map(g=>`<tr>
+    <td><span class="chip">${esc(g.return_type)}</span></td>
+    <td class="fw">${fmtMon(g.period)}</td>
+    <td class="sm">${fmtD(g.due_date)}</td>
+    <td class="num">${g.tax_amount?fmt(g.tax_amount):'—'}</td>
+    <td>${g.cgst?fmt(g.cgst):'—'}</td>
+    <td>${g.sgst?fmt(g.sgst):'—'}</td>
+    <td>${g.igst?fmt(g.igst):'—'}</td>
+    <td style="font-size:.73rem;color:var(--muted)">${esc(g.arn||'—')}</td>
+    <td>${badge(g.status)}</td>
+    <td><button class="btn btn-icon btn-sm" onclick="delGst('${g.id}')" title="Delete" style="color:var(--muted)">✕</button></td>
+  </tr>`).join('');
+
+  let filed=0,ovd=0,pend=0,tax=0;
+  gsts.forEach(g=>{
+    if(g.status==='Filed')filed++;else if(g.status==='Overdue')ovd++;else if(g.status==='Pending')pend++;
+    tax+=g.tax_amount||0;
+  });
+  $('gk-filed').textContent=filed;$('gk-ovd').textContent=ovd;$('gk-pend').textContent=pend;$('gk-tax').textContent=fmt(tax);
+}
+
+/* ═══════════════════════════
+   DASHBOARD
+═══════════════════════════ */
+function renderDash(){
+  // KPIs
+  let expTot=0,expPaid=0,expOvd=0;
+  exps.forEach(e=>{expTot+=e.amount;const s=expSt(e);if(s==='Paid')expPaid+=e.amount;if(s==='Overdue')expOvd+=e.amount});
+  let purTot=0;purs.forEach(p=>purTot+=p.total_amount||0);
+  $('dk-exp').textContent=fmt(expTot);$('dk-paid').textContent=fmt(expPaid);
+  $('dk-ovd').textContent=fmt(expOvd);$('dk-pur').textContent=fmt(purTot);
+
+  // Recent expenses
+  const rec=exps.slice(0,6);
+  const dotCol={Paid:'#059669',Overdue:'#DC2626',Pending:'#D97706'};
+  $('dash-recent').innerHTML=rec.length===0
+    ?'<div class="empty"><div class="empty-ico">📋</div><p>No expenses yet</p></div>'
+    :rec.map(e=>`<div class="ri">
+        <div class="ri-dot" style="background:${dotCol[expSt(e)]}"></div>
+        <div class="ri-info"><div class="ri-name">${esc(e.name)}</div><div class="ri-meta">${fmtD(e.due_date)} · ${e.method}</div></div>
+        <div class="ri-right"><div class="ri-amt">${fmt(e.amount)}</div>${badge(expSt(e))}</div>
+      </div>`).join('');
+
+  // GST progress bars
+  const byType={};
+  gsts.forEach(g=>{if(!byType[g.return_type])byType[g.return_type]={t:0,f:0};byType[g.return_type].t++;if(g.status==='Filed')byType[g.return_type].f++;});
+  const gColors={'GSTR-1':'#F97316','GSTR-3B':'#059669','GSTR-9':'#2563EB','GSTR-9C':'#D97706','GSTR-2A':'#7C3AED','GSTR-2B':'#DB2777','CMP-08':'#0891B2'};
+  $('dash-gst-prog').innerHTML=Object.keys(byType).length===0
+    ?'<div style="font-size:.78rem;color:var(--muted);text-align:center;padding:.5rem 0">No filings recorded</div>'
+    :Object.entries(byType).map(([type,{t,f}])=>{
+      const pct=Math.round(f/t*100);const col=gColors[type]||'#F97316';
+      return`<div class="gp-row"><div class="gp-hdr"><b>${type}</b><span>${f}/${t} filed</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${col}"></div></div></div>`;
+    }).join('');
+
+  // Bar chart — last 6 months
+  const months=[];const now=new Date();
+  for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({lbl:d.toLocaleString('default',{month:'short'}),y:d.getFullYear(),m:d.getMonth()})}
+  const chartVals=months.map(mo=>exps.filter(e=>{const d=new Date(e.due_date);return d.getFullYear()===mo.y&&d.getMonth()===mo.m}).reduce((s,e)=>s+e.amount,0));
+  const ctx=$('dash-chart').getContext('2d');
+  if(dChart)dChart.destroy();
+  dChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels:months.map(m=>m.lbl),datasets:[{label:'₹',data:chartVals,backgroundColor:'rgba(249,115,22,.15)',borderColor:'#F97316',borderWidth:2,borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₹'+c.parsed.y.toLocaleString('en-IN')}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#9CA3AF'}},y:{grid:{color:'#F3F4F6'},ticks:{font:{size:11},color:'#9CA3AF',callback:v=>'₹'+v.toLocaleString('en-IN')}}}}
+  });
+
+  // Donut chart — purchases by category
+  const catTotals={};purs.forEach(p=>{const c=p.category||'Other';catTotals[c]=(catTotals[c]||0)+(p.total_amount||0)});
+  const purCtx=$('pur-chart').getContext('2d');
+  $('pur-chart').style.display=Object.keys(catTotals).length?'block':'none';
+  $('dash-pur-empty').style.display=Object.keys(catTotals).length?'none':'block';
+  if(purDChart)purDChart.destroy();
+  if(Object.keys(catTotals).length){
+    const dColors=['#F97316','#059669','#2563EB','#7C3AED','#D97706','#DB2777','#0891B2'];
+    purDChart=new Chart(purCtx,{
+      type:'doughnut',
+      data:{labels:Object.keys(catTotals),datasets:[{data:Object.values(catTotals),backgroundColor:dColors,borderWidth:2,borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:11},color:'#6B7280',boxWidth:10,padding:8}},tooltip:{callbacks:{label:c=>`${c.label}: ₹${c.parsed.toLocaleString('en-IN')}`}}}}
+    });
+  }
+}
+
+/* ─── CSV helper ─── */
+function dlCsv(rows,name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'}));
+  a.download=name;a.click();
+}
+
+/* ─── Expose delete fns globally ─── */
+window.delExp=delExp;window.delPur=delPur;window.delGst=delGst;
+
+/* ─── Init ─── */
+(async()=>{
+  const{data:{session}}=await sb.auth.getSession();
+  if(session)boot(session.user);
 })();
 </script>
 </body>
