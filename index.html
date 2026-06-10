@@ -6,6 +6,8 @@
 <title>BizSuite</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
 /* ─── RESET ─────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -337,7 +339,44 @@ canvas{width:100%!important;max-height:210px}
   display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem
 }
 
-/* ─── RESPONSIVE ─────────────────────────────── */
+/* PDF export button */
+.btn-pdf{background:#1e293b;color:#fff;border:none}
+.btn-pdf:hover{background:#0f172a}
+.btn-pdf svg{flex-shrink:0}
+/* PDF modal overlay */
+.pdf-modal{
+  display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.55);
+  align-items:center;justify-content:center;padding:1rem;
+}
+.pdf-modal.on{display:flex}
+.pdf-modal-box{
+  background:#fff;border-radius:14px;width:100%;max-width:460px;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;
+}
+.pdf-modal-head{
+  background:#0f172a;padding:1.25rem 1.5rem;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.pdf-modal-head h2{font-size:.95rem;font-weight:700;color:#fff;letter-spacing:-.01em}
+.pdf-modal-head p{font-size:.72rem;color:#94a3b8;margin-top:2px}
+.pdf-modal-close{background:none;border:none;color:#64748b;font-size:1.2rem;cursor:pointer;padding:0 2px;line-height:1}
+.pdf-modal-close:hover{color:#fff}
+.pdf-modal-body{padding:1.4rem 1.5rem}
+.pdf-opt-row{display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.2rem}
+.pdf-opt{
+  display:flex;align-items:center;gap:.85rem;padding:.85rem 1rem;
+  border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;
+  transition:border-color .15s,background .15s;
+}
+.pdf-opt:hover{border-color:#F97316;background:#fff7ed}
+.pdf-opt-icon{
+  width:36px;height:36px;border-radius:8px;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;
+}
+.pdf-opt-text b{display:block;font-size:.83rem;font-weight:700;color:#111827}
+.pdf-opt-text span{font-size:.72rem;color:#6b7280}
+.pdf-modal-actions{display:flex;gap:.65rem;padding-top:.5rem}
+
 @media(max-width:900px){
   .tbar-nav{display:none}
   .hamburger{display:flex}
@@ -520,10 +559,16 @@ canvas{width:100%!important;max-height:210px}
     <div class="page" id="pg-expenses">
       <div class="pg-head">
         <div class="pg-head-left"><h1>Expense Tracker</h1><p>Record and monitor all business expenses</p></div>
-        <button class="btn btn-orange" id="exp-open-btn">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
-          Add Expense
-        </button>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+          <button class="btn btn-pdf" id="exp-pdf-btn">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M5 2h7l4 4v12a1 1 0 01-1 1H5a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="#fff" stroke-width="1.7"/><path d="M12 2v4h4" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><path d="M7 11h6M7 14h4" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Export PDF
+          </button>
+          <button class="btn btn-orange" id="exp-open-btn">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+            Add Expense
+          </button>
+        </div>
       </div>
 
       <div class="kpi-row">
@@ -592,10 +637,16 @@ canvas{width:100%!important;max-height:210px}
     <div class="page" id="pg-purchases">
       <div class="pg-head">
         <div class="pg-head-left"><h1>Purchase Entry</h1><p>Log supplier orders and attach documents</p></div>
-        <button class="btn btn-orange" id="pur-open-btn">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
-          New Purchase
-        </button>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+          <button class="btn btn-pdf" id="pur-pdf-btn">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M5 2h7l4 4v12a1 1 0 01-1 1H5a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="#fff" stroke-width="1.7"/><path d="M12 2v4h4" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><path d="M7 11h6M7 14h4" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Export PDF
+          </button>
+          <button class="btn btn-orange" id="pur-open-btn">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+            New Purchase
+          </button>
+        </div>
       </div>
 
       <div class="kpi-row" style="grid-template-columns:repeat(3,1fr)">
@@ -675,10 +726,16 @@ canvas{width:100%!important;max-height:210px}
     <div class="page" id="pg-gst">
       <div class="pg-head">
         <div class="pg-head-left"><h1>GST Filing Tracker</h1><p>Monitor your GSTR compliance calendar</p></div>
-        <button class="btn btn-orange" id="gst-open-btn">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
-          Add Filing
-        </button>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+          <button class="btn btn-pdf" id="gst-pdf-btn">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M5 2h7l4 4v12a1 1 0 01-1 1H5a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="#fff" stroke-width="1.7"/><path d="M12 2v4h4" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><path d="M7 11h6M7 14h4" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Export PDF
+          </button>
+          <button class="btn btn-orange" id="gst-open-btn">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+            Add Filing
+          </button>
+        </div>
       </div>
 
       <div class="kpi-row gst-summary">
@@ -738,6 +795,29 @@ canvas{width:100%!important;max-height:210px}
 </div><!-- /app -->
 
 <div class="toast" id="toast"></div>
+
+<!-- ════════════════════ PDF MODAL ════════════════════ -->
+<div class="pdf-modal" id="pdf-modal">
+  <div class="pdf-modal-box">
+    <div class="pdf-modal-head">
+      <div>
+        <h2 id="pdf-modal-title">Export PDF Report</h2>
+        <p id="pdf-modal-sub">Choose report type</p>
+      </div>
+      <button class="pdf-modal-close" id="pdf-modal-close">✕</button>
+    </div>
+    <div class="pdf-modal-body">
+      <div class="pdf-opt-row" id="pdf-opts"></div>
+      <div class="pdf-modal-actions">
+        <button class="btn btn-pdf" id="pdf-gen-btn" style="flex:1;justify-content:center">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M10 13V4m0 9-3-3m3 3 3-3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 15v1a1 1 0 001 1h12a1 1 0 001-1v-1" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+          Generate &amp; Download PDF
+        </button>
+        <button class="btn btn-ghost" id="pdf-modal-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ════════════════════ JS ════════════════════ -->
 <script>
@@ -1195,6 +1275,645 @@ function dlCsv(rows,name){
 
 /* ─── Expose delete fns globally ─── */
 window.delExp=delExp;window.delPur=delPur;window.delGst=delGst;
+
+/* ═══════════════════════════════════════════════
+   PDF EXPORT ENGINE
+   Uses jsPDF + jsPDF-AutoTable
+═══════════════════════════════════════════════ */
+const PDF = (() => {
+  // Brand colours (RGB)
+  const C = {
+    navy:   [13,  17,  23],
+    brand:  [249, 115, 22],
+    green:  [5,  150, 105],
+    red:    [220, 38,  38],
+    amber:  [217, 119,  6],
+    blue:   [37, 99, 235],
+    muted:  [107, 114, 128],
+    border: [229, 231, 235],
+    bg:     [248, 250, 252],
+    white:  [255, 255, 255],
+  };
+
+  // ── helpers ──────────────────────────────
+  const fmtR  = n => 'Rs.' + (n||0).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const fmtDR = d => { if(!d) return '—'; const [y,m,day]=(d+'').split('T')[0].split('-'); return `${day}/${m}/${y}`; };
+  const fmtMonR = s => { if(!s) return '—'; const [y,m]=s.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+' '+y; };
+  const expStR = e => e.paid_date ? 'Paid' : (new Date(e.due_date) < new Date() ? 'Overdue' : 'Pending');
+
+  // ── draw page header ──────────────────────
+  function drawHeader(doc, title, subtitle, pageW) {
+    // Dark banner
+    doc.setFillColor(...C.navy);
+    doc.rect(0, 0, pageW, 36, 'F');
+    // Brand accent strip
+    doc.setFillColor(...C.brand);
+    doc.rect(0, 36, pageW, 3, 'F');
+    // Logo mark
+    doc.setFillColor(...C.brand);
+    doc.roundedRect(14, 8, 20, 20, 3, 3, 'F');
+    doc.setTextColor(...C.white);
+    doc.setFontSize(10);
+    doc.setFont('helvetica','bold');
+    doc.text('BS', 24, 21, {align:'center'});
+    // App name
+    doc.setFontSize(15);
+    doc.setFont('helvetica','bold');
+    doc.text('BizSuite', 40, 18);
+    doc.setFontSize(8);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(148, 163, 184);
+    doc.text('Business Management Suite', 40, 25);
+    // Report title (right-aligned)
+    doc.setTextColor(...C.white);
+    doc.setFontSize(11);
+    doc.setFont('helvetica','bold');
+    doc.text(title, pageW - 14, 16, {align:'right'});
+    doc.setFontSize(8);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(148, 163, 184);
+    doc.text(subtitle, pageW - 14, 24, {align:'right'});
+    return 48; // y after header
+  }
+
+  // ── draw summary KPI boxes ──────────────────
+  function drawKpis(doc, kpis, startY, pageW) {
+    const margin = 14, gap = 6;
+    const totalW = pageW - margin * 2;
+    const boxW   = (totalW - gap * (kpis.length - 1)) / kpis.length;
+    const boxH   = 24;
+    kpis.forEach((k, i) => {
+      const x = margin + i * (boxW + gap);
+      doc.setFillColor(...C.bg);
+      doc.roundedRect(x, startY, boxW, boxH, 2, 2, 'F');
+      doc.setFillColor(...k.color);
+      doc.rect(x, startY, 3, boxH, 'F');
+      doc.setFontSize(7);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(...C.muted);
+      doc.text(k.label.toUpperCase(), x + 7, startY + 8);
+      doc.setFontSize(11);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(...C.navy);
+      doc.text(k.value, x + 7, startY + 19);
+    });
+    return startY + boxH + 10;
+  }
+
+  // ── draw section heading ──────────────────
+  function drawSection(doc, text, y, pageW) {
+    doc.setFillColor(...C.bg);
+    doc.rect(14, y, pageW - 28, 10, 'F');
+    doc.setFillColor(...C.brand);
+    doc.rect(14, y, 3, 10, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(...C.navy);
+    doc.text(text, 21, y + 7);
+    return y + 16;
+  }
+
+  // ── draw page footer ──────────────────────
+  function drawFooter(doc, pageNum, totalPages, pageW, pageH) {
+    doc.setFillColor(...C.bg);
+    doc.rect(0, pageH - 14, pageW, 14, 'F');
+    doc.setDrawColor(...C.border);
+    doc.setLineWidth(0.3);
+    doc.line(14, pageH - 14, pageW - 14, pageH - 14);
+    doc.setFontSize(7);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(...C.muted);
+    doc.text(`Generated by BizSuite  •  ${new Date().toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'})}`, 14, pageH - 5);
+    doc.text(`Page ${pageNum} of ${totalPages}`, pageW - 14, pageH - 5, {align:'right'});
+  }
+
+  // ── status cell fill colour ───────────────
+  function statusStyle(s) {
+    const m = {Paid:[209,250,229],Filed:[209,250,229],Received:[209,250,229],
+               Overdue:[254,226,226],Cancelled:[254,226,226],
+               Ordered:[219,234,254],Pending:[254,243,199],Partial:[254,243,199],'Under Review':[237,233,254]};
+    const t = {Paid:[6,95,70],Filed:[6,95,70],Received:[6,95,70],
+               Overdue:[153,27,27],Cancelled:[153,27,27],
+               Ordered:[30,64,175],Pending:[146,64,14],Partial:[146,64,14],'Under Review':[76,29,149]};
+    return { fillColor: m[s]||C.bg, textColor: t[s]||C.muted, fontStyle:'bold' };
+  }
+
+  // ────────────────────────────────────────────
+  //  EXPENSE REPORT
+  // ────────────────────────────────────────────
+  function expenseReport(exps, filterLabel) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+
+    let tot=0, paid=0, ovd=0, pend=0;
+    exps.forEach(e => {
+      tot+=e.amount;
+      const s=expStR(e);
+      if(s==='Paid') paid+=e.amount;
+      else if(s==='Overdue') ovd+=e.amount;
+      else pend+=e.amount;
+    });
+
+    let y = drawHeader(doc, 'Expense Report', filterLabel || 'All Expenses', pageW);
+
+    y = drawKpis(doc, [
+      {label:'Total',   value: fmtR(tot),  color: C.brand},
+      {label:'Paid',    value: fmtR(paid), color: C.green},
+      {label:'Overdue', value: fmtR(ovd),  color: C.red},
+      {label:'Pending', value: fmtR(pend), color: C.amber},
+      {label:'Records', value: String(exps.length), color: C.blue},
+    ], y, pageW);
+
+    y = drawSection(doc, 'EXPENSE DETAILS', y, pageW);
+
+    doc.autoTable({
+      startY: y,
+      margin: {left:14, right:14, bottom:18},
+      head: [['#','Expense Name','Amount','Due Date','Date Paid','Method','Status']],
+      body: exps.map((e,i) => [
+        i+1,
+        e.name,
+        fmtR(e.amount),
+        fmtDR(e.due_date),
+        fmtDR(e.paid_date),
+        e.method,
+        expStR(e)
+      ]),
+      headStyles: {
+        fillColor: C.navy, textColor: C.white,
+        fontStyle:'bold', fontSize:8, halign:'left', cellPadding:5
+      },
+      columnStyles: {
+        0: {halign:'center', cellWidth:10},
+        2: {halign:'right',  fontStyle:'bold'},
+        6: {halign:'center'}
+      },
+      bodyStyles: { fontSize:8, cellPadding:4, textColor:C.navy },
+      alternateRowStyles: { fillColor: [250,251,252] },
+      willDrawCell(data) {
+        if (data.section==='body' && data.column.index===6) {
+          const s = data.cell.raw;
+          const style = statusStyle(s);
+          data.cell.styles.fillColor = style.fillColor;
+          data.cell.styles.textColor = style.textColor;
+          data.cell.styles.fontStyle = style.fontStyle;
+        }
+      },
+      didDrawPage(data) {
+        const pg = doc.internal.getCurrentPageInfo().pageNumber;
+        const total = doc.internal.getNumberOfPages();
+        drawFooter(doc, pg, total, pageW, pageH);
+      }
+    });
+
+    // Summary box on last page
+    const finalY = doc.lastAutoTable.finalY + 8;
+    if (finalY < pageH - 40) {
+      doc.setFillColor(...C.bg);
+      doc.roundedRect(14, finalY, 120, 22, 3, 3, 'F');
+      doc.setFontSize(8);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(...C.navy);
+      doc.text('REPORT SUMMARY', 20, finalY + 8);
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(...C.muted);
+      doc.text(`Total expenses: ${fmtR(tot)}  |  Paid: ${fmtR(paid)}  |  Overdue: ${fmtR(ovd)}  |  Pending: ${fmtR(pend)}`, 20, finalY + 17);
+    }
+
+    doc.save(`BizSuite_Expense_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+  }
+
+  // ────────────────────────────────────────────
+  //  PURCHASE REPORT
+  // ────────────────────────────────────────────
+  function purchaseReport(purs, filterLabel) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+
+    let tot=0; purs.forEach(p=>tot+=p.total_amount||0);
+    const avg = purs.length ? tot/purs.length : 0;
+
+    // Category breakdown
+    const cats = {};
+    purs.forEach(p=>{ const c=p.category||'Other'; cats[c]=(cats[c]||0)+(p.total_amount||0); });
+
+    let y = drawHeader(doc, 'Purchase Report', filterLabel || 'All Purchase Orders', pageW);
+
+    y = drawKpis(doc, [
+      {label:'Total Spend',  value: fmtR(tot),  color: C.blue},
+      {label:'Orders',       value: String(purs.length), color: C.brand},
+      {label:'Avg. Order',   value: fmtR(avg),  color: C.amber},
+    ], y, pageW);
+
+    // Category breakdown mini table
+    if (Object.keys(cats).length > 0) {
+      y = drawSection(doc, 'SPEND BY CATEGORY', y, pageW);
+      doc.autoTable({
+        startY: y,
+        margin: {left:14, right: pageW/2 + 4, bottom:18},
+        head: [['Category','Total Spend','% Share']],
+        body: Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>[
+          c, fmtR(v), (v/tot*100).toFixed(1)+'%'
+        ]),
+        headStyles:{fillColor:C.navy,textColor:C.white,fontStyle:'bold',fontSize:7.5,cellPadding:4},
+        bodyStyles:{fontSize:7.5,cellPadding:3.5,textColor:C.navy},
+        alternateRowStyles:{fillColor:[250,251,252]},
+        columnStyles:{1:{halign:'right',fontStyle:'bold'},2:{halign:'right'}},
+        didDrawPage(data){
+          const pg=doc.internal.getCurrentPageInfo().pageNumber;
+          const total=doc.internal.getNumberOfPages();
+          drawFooter(doc,pg,total,pageW,pageH);
+        }
+      });
+      y = doc.lastAutoTable.finalY + 12;
+    }
+
+    y = drawSection(doc, 'PURCHASE ORDER DETAILS', y, pageW);
+
+    doc.autoTable({
+      startY: y,
+      margin: {left:14, right:14, bottom:18},
+      head: [['#','Supplier','Item','Category','Qty','Unit Price','GST %','Total','Date','Invoice','Status']],
+      body: purs.map((p,i) => [
+        i+1,
+        p.supplier_name,
+        p.item_name,
+        p.category||'—',
+        p.quantity,
+        fmtR(p.unit_price),
+        p.gst_percent ? p.gst_percent+'%' : '—',
+        fmtR(p.total_amount),
+        fmtDR(p.purchase_date),
+        p.invoice_no||'—',
+        p.status
+      ]),
+      headStyles:{fillColor:C.navy,textColor:C.white,fontStyle:'bold',fontSize:7.5,cellPadding:4,halign:'left'},
+      bodyStyles:{fontSize:7.5,cellPadding:3.5,textColor:C.navy},
+      alternateRowStyles:{fillColor:[250,251,252]},
+      columnStyles:{
+        0:{halign:'center',cellWidth:8},
+        4:{halign:'right'},
+        5:{halign:'right',fontStyle:'bold'},
+        7:{halign:'right',fontStyle:'bold'},
+        10:{halign:'center'}
+      },
+      willDrawCell(data){
+        if(data.section==='body'&&data.column.index===10){
+          const s=data.cell.raw;const st=statusStyle(s);
+          data.cell.styles.fillColor=st.fillColor;
+          data.cell.styles.textColor=st.textColor;
+          data.cell.styles.fontStyle=st.fontStyle;
+        }
+      },
+      didDrawPage(data){
+        const pg=doc.internal.getCurrentPageInfo().pageNumber;
+        const tot2=doc.internal.getNumberOfPages();
+        drawFooter(doc,pg,tot2,pageW,pageH);
+      }
+    });
+
+    doc.save(`BizSuite_Purchase_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+  }
+
+  // ────────────────────────────────────────────
+  //  GST FILING REPORT
+  // ────────────────────────────────────────────
+  function gstReport(gsts, filterLabel) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+
+    let filed=0,ovd=0,pend=0,tax=0,cgst=0,sgst=0,igst=0;
+    gsts.forEach(g=>{
+      if(g.status==='Filed')filed++;
+      else if(g.status==='Overdue')ovd++;
+      else pend++;
+      tax+=g.tax_amount||0; cgst+=g.cgst||0; sgst+=g.sgst||0; igst+=g.igst||0;
+    });
+
+    let y = drawHeader(doc, 'GST Filing Report', filterLabel || 'All Filings', pageW);
+
+    y = drawKpis(doc, [
+      {label:'Filed',    value: String(filed),  color: C.green},
+      {label:'Overdue',  value: String(ovd),    color: C.red},
+      {label:'Pending',  value: String(pend),   color: C.amber},
+      {label:'Tax Paid', value: fmtR(tax),      color: C.blue},
+    ], y, pageW);
+
+    // Tax breakdown box
+    if (tax > 0) {
+      y = drawSection(doc, 'TAX BREAKDOWN', y, pageW);
+      doc.autoTable({
+        startY: y,
+        margin: {left:14, right: pageW*0.55, bottom:18},
+        head:[['Component','Amount']],
+        body:[
+          ['CGST', fmtR(cgst)],
+          ['SGST', fmtR(sgst)],
+          ['IGST', fmtR(igst)],
+          ['Total Tax', fmtR(tax)],
+        ],
+        headStyles:{fillColor:C.navy,textColor:C.white,fontStyle:'bold',fontSize:8,cellPadding:4},
+        bodyStyles:{fontSize:8,cellPadding:4,textColor:C.navy},
+        columnStyles:{1:{halign:'right',fontStyle:'bold'}},
+        alternateRowStyles:{fillColor:[250,251,252]},
+        didDrawPage(data){
+          const pg=doc.internal.getCurrentPageInfo().pageNumber;
+          const t=doc.internal.getNumberOfPages();
+          drawFooter(doc,pg,t,pageW,pageH);
+        }
+      });
+      y = doc.lastAutoTable.finalY + 12;
+    }
+
+    y = drawSection(doc, 'FILING DETAILS', y, pageW);
+
+    // Group by period for visual hierarchy
+    const byPeriod = {};
+    gsts.forEach(g => {
+      const k = g.period || 'Unknown';
+      if(!byPeriod[k]) byPeriod[k] = [];
+      byPeriod[k].push(g);
+    });
+
+    doc.autoTable({
+      startY: y,
+      margin: {left:14, right:14, bottom:18},
+      head:[['#','Return Type','Period','Due Date','Tax (Rs.)','CGST','SGST','IGST','ARN','Status']],
+      body: gsts.map((g,i) => [
+        i+1,
+        g.return_type,
+        fmtMonR(g.period),
+        fmtDR(g.due_date),
+        g.tax_amount ? fmtR(g.tax_amount) : '—',
+        g.cgst ? fmtR(g.cgst) : '—',
+        g.sgst ? fmtR(g.sgst) : '—',
+        g.igst ? fmtR(g.igst) : '—',
+        g.arn || '—',
+        g.status
+      ]),
+      headStyles:{fillColor:C.navy,textColor:C.white,fontStyle:'bold',fontSize:7.5,cellPadding:4,halign:'left'},
+      bodyStyles:{fontSize:7.5,cellPadding:3.5,textColor:C.navy},
+      alternateRowStyles:{fillColor:[250,251,252]},
+      columnStyles:{
+        0:{halign:'center',cellWidth:8},
+        4:{halign:'right',fontStyle:'bold'},
+        5:{halign:'right'},6:{halign:'right'},7:{halign:'right'},
+        8:{fontSize:6.5},
+        9:{halign:'center'}
+      },
+      willDrawCell(data){
+        if(data.section==='body'&&data.column.index===9){
+          const s=data.cell.raw;const st=statusStyle(s);
+          data.cell.styles.fillColor=st.fillColor;
+          data.cell.styles.textColor=st.textColor;
+          data.cell.styles.fontStyle=st.fontStyle;
+        }
+      },
+      didDrawPage(data){
+        const pg=doc.internal.getCurrentPageInfo().pageNumber;
+        const t=doc.internal.getNumberOfPages();
+        drawFooter(doc,pg,t,pageW,pageH);
+      }
+    });
+
+    doc.save(`BizSuite_GST_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+  }
+
+  // ────────────────────────────────────────────
+  //  MONTHLY GST REPORT (single month deep-dive)
+  // ────────────────────────────────────────────
+  function gstMonthlyReport(gsts, month) {
+    // month = 'YYYY-MM' or null (current month)
+    const now = new Date();
+    const targetMonth = month || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const filtered = gsts.filter(g => g.period === targetMonth);
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+
+    const [y2,m2] = targetMonth.split('-');
+    const monthLabel = ['January','February','March','April','May','June','July','August','September','October','November','December'][+m2-1]+' '+y2;
+
+    let y = drawHeader(doc, 'Monthly GST Filing', monthLabel, pageW);
+
+    let tax=0,cgst=0,sgst=0,igst=0,filed=0;
+    filtered.forEach(g=>{ tax+=g.tax_amount||0; cgst+=g.cgst||0; sgst+=g.sgst||0; igst+=g.igst||0; if(g.status==='Filed')filed++; });
+
+    y = drawKpis(doc, [
+      {label:'Returns',  value: String(filtered.length), color: C.brand},
+      {label:'Filed',    value: String(filed),           color: C.green},
+      {label:'Tax Total',value: fmtR(tax),               color: C.blue},
+    ], y, pageW);
+
+    // Tax split donut-style table
+    if (tax > 0) {
+      y = drawSection(doc, 'TAX COMPONENT BREAKDOWN — '+monthLabel.toUpperCase(), y, pageW);
+      const comps = [['CGST', cgst], ['SGST', sgst], ['IGST', igst], ['Total', tax]];
+      doc.autoTable({
+        startY: y,
+        margin: {left:14, right:14, bottom:18},
+        head:[['Component','Amount (Rs.)','Share %']],
+        body: comps.map(([k,v])=>[k, fmtR(v), tax>0?(v/tax*100).toFixed(1)+'%':'—']),
+        headStyles:{fillColor:C.navy,textColor:C.white,fontStyle:'bold',fontSize:8.5,cellPadding:5},
+        bodyStyles:{fontSize:8.5,cellPadding:5,textColor:C.navy},
+        columnStyles:{1:{halign:'right',fontStyle:'bold'},2:{halign:'right'}},
+        alternateRowStyles:{fillColor:[250,251,252]},
+        didDrawPage(data){drawFooter(doc,doc.internal.getCurrentPageInfo().pageNumber,doc.internal.getNumberOfPages(),pageW,pageH);}
+      });
+      y = doc.lastAutoTable.finalY + 12;
+    }
+
+    y = drawSection(doc, 'FILINGS FOR '+monthLabel.toUpperCase(), y, pageW);
+
+    if (filtered.length === 0) {
+      doc.setFontSize(9); doc.setTextColor(...C.muted);
+      doc.text('No filings recorded for this period.', 14, y+6);
+    } else {
+      doc.autoTable({
+        startY: y,
+        margin: {left:14, right:14, bottom:18},
+        head:[['Return Type','Due Date','Tax (Rs.)','CGST','SGST','IGST','ARN','Status','Remarks']],
+        body: filtered.map(g=>[
+          g.return_type,
+          fmtDR(g.due_date),
+          g.tax_amount?fmtR(g.tax_amount):'—',
+          g.cgst?fmtR(g.cgst):'—',
+          g.sgst?fmtR(g.sgst):'—',
+          g.igst?fmtR(g.igst):'—',
+          g.arn||'—',
+          g.status,
+          g.remarks||'—'
+        ]),
+        headStyles:{fillColor:C.navy,textColor:C.white,fontStyle:'bold',fontSize:8,cellPadding:4.5},
+        bodyStyles:{fontSize:8,cellPadding:4.5,textColor:C.navy},
+        alternateRowStyles:{fillColor:[250,251,252]},
+        columnStyles:{
+          2:{halign:'right',fontStyle:'bold'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},
+          7:{halign:'center'},8:{fontSize:7,textColor:C.muted}
+        },
+        willDrawCell(data){
+          if(data.section==='body'&&data.column.index===7){
+            const s=data.cell.raw;const st=statusStyle(s);
+            data.cell.styles.fillColor=st.fillColor;data.cell.styles.textColor=st.textColor;data.cell.styles.fontStyle=st.fontStyle;
+          }
+        },
+        didDrawPage(data){drawFooter(doc,doc.internal.getCurrentPageInfo().pageNumber,doc.internal.getNumberOfPages(),pageW,pageH);}
+      });
+    }
+
+    doc.save(`BizSuite_GST_${targetMonth}.pdf`);
+  }
+
+  return { expenseReport, purchaseReport, gstReport, gstMonthlyReport };
+})();
+
+/* ═══════════════════════════════════════════════
+   PDF MODAL CONTROLLER
+═══════════════════════════════════════════════ */
+let pdfContext = null; // 'expenses' | 'purchases' | 'gst'
+
+const pdfModal    = $('pdf-modal');
+const pdfOpts     = $('pdf-opts');
+const pdfGenBtn   = $('pdf-gen-btn');
+const pdfTitle    = $('pdf-modal-title');
+const pdfSub      = $('pdf-modal-sub');
+
+function openPdfModal(ctx) {
+  pdfContext = ctx;
+  pdfOpts.innerHTML = '';
+
+  if (ctx === 'expenses') {
+    pdfTitle.textContent = 'Export Expense Report';
+    pdfSub.textContent   = 'Choose what to include';
+    pdfOpts.innerHTML = `
+      <div class="pdf-opt" data-v="all">
+        <div class="pdf-opt-icon" style="background:#fff7ed"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="2" stroke="#f97316" stroke-width="1.7"/><path d="M7 7h6M7 10.5h4" stroke="#f97316" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <div class="pdf-opt-text"><b>All Expenses</b><span>Complete expense register — all ${exps.length} records</span></div>
+      </div>
+      <div class="pdf-opt" data-v="paid">
+        <div class="pdf-opt-icon" style="background:#d1fae5"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#059669" stroke-width="1.7"/><path d="M7 10l2 2 4-4" stroke="#059669" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="pdf-opt-text"><b>Paid Only</b><span>Expenses that have been cleared</span></div>
+      </div>
+      <div class="pdf-opt" data-v="overdue">
+        <div class="pdf-opt-icon" style="background:#fee2e2"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#dc2626" stroke-width="1.7"/><path d="M10 7v4M10 13.5v.5" stroke="#dc2626" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+        <div class="pdf-opt-text"><b>Overdue Only</b><span>Expenses past their due date</span></div>
+      </div>`;
+
+  } else if (ctx === 'purchases') {
+    pdfTitle.textContent = 'Export Purchase Report';
+    pdfSub.textContent   = 'Choose what to include';
+    pdfOpts.innerHTML = `
+      <div class="pdf-opt" data-v="all">
+        <div class="pdf-opt-icon" style="background:#dbeafe"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 4h2l2.5 8h7.5l2-5H7" stroke="#2563eb" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="16" r="1.3" fill="#2563eb"/><circle cx="15" cy="16" r="1.3" fill="#2563eb"/></svg></div>
+        <div class="pdf-opt-text"><b>All Purchase Orders</b><span>Complete purchase register — all ${purs.length} records</span></div>
+      </div>
+      <div class="pdf-opt" data-v="received">
+        <div class="pdf-opt-icon" style="background:#d1fae5"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#059669" stroke-width="1.7"/><path d="M7 10l2 2 4-4" stroke="#059669" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="pdf-opt-text"><b>Received Orders</b><span>Orders that have been delivered</span></div>
+      </div>
+      <div class="pdf-opt" data-v="ordered">
+        <div class="pdf-opt-icon" style="background:#dbeafe"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#2563eb" stroke-width="1.7"/><path d="M10 7v3.5l2 2" stroke="#2563eb" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+        <div class="pdf-opt-text"><b>Open Orders</b><span>Ordered but not yet received</span></div>
+      </div>`;
+
+  } else if (ctx === 'gst') {
+    pdfTitle.textContent = 'Export GST Report';
+    pdfSub.textContent   = 'Choose report type';
+
+    // Get unique periods
+    const periods = [...new Set(gsts.map(g=>g.period).filter(Boolean))].sort().reverse().slice(0,6);
+
+    pdfOpts.innerHTML = `
+      <div class="pdf-opt" data-v="all">
+        <div class="pdf-opt-icon" style="background:#dbeafe"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#2563eb" stroke-width="1.7"/><path d="M10 6v4l2.5 2" stroke="#2563eb" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+        <div class="pdf-opt-text"><b>Full Filing Register</b><span>All ${gsts.length} GST filings across all periods</span></div>
+      </div>
+      <div class="pdf-opt" data-v="monthly-current">
+        <div class="pdf-opt-icon" style="background:#fff7ed"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="2" stroke="#f97316" stroke-width="1.7"/><path d="M7 2v3M13 2v3M3 9h14" stroke="#f97316" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <div class="pdf-opt-text"><b>Current Month Summary</b><span>Detailed report for ${(()=>{const n=new Date();return['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][n.getMonth()]+' '+n.getFullYear()})()} </span></div>
+      </div>
+      ${periods.map(p=>`
+      <div class="pdf-opt" data-v="monthly-${p}">
+        <div class="pdf-opt-icon" style="background:#ede9fe"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="2" stroke="#7c3aed" stroke-width="1.7"/><path d="M7 2v3M13 2v3M3 9h14" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <div class="pdf-opt-text"><b>${fmtMonR(p)}</b><span>${gsts.filter(g=>g.period===p).length} filing(s) in this period</span></div>
+      </div>`).join('')}`;
+  }
+
+  // Mark first option as selected
+  const first = pdfOpts.querySelector('.pdf-opt');
+  if (first) first.classList.add('selected');
+
+  pdfModal.classList.add('on');
+}
+
+// Option selection
+pdfOpts.addEventListener('click', e => {
+  const opt = e.target.closest('.pdf-opt');
+  if (!opt) return;
+  pdfOpts.querySelectorAll('.pdf-opt').forEach(o=>o.classList.remove('selected'));
+  opt.classList.add('selected');
+});
+
+// Selected option style
+const styleSheet = document.createElement('style');
+styleSheet.textContent = '.pdf-opt.selected{border-color:#F97316;background:#fff7ed}';
+document.head.appendChild(styleSheet);
+
+// Generate
+pdfGenBtn.onclick = () => {
+  const sel = pdfOpts.querySelector('.pdf-opt.selected');
+  if (!sel) { showToast('Select a report type first.', false); return; }
+  const v = sel.dataset.v;
+  pdfGenBtn.textContent = 'Generating…';
+  pdfGenBtn.disabled = true;
+
+  setTimeout(() => { // allow UI to update
+    try {
+      if (pdfContext === 'expenses') {
+        const filtered = v==='all' ? exps : exps.filter(e=>expSt(e).toLowerCase()===v);
+        PDF.expenseReport(filtered, v==='all'?'All Expenses':(v==='paid'?'Paid Only':'Overdue Only'));
+
+      } else if (pdfContext === 'purchases') {
+        const filtered = v==='all' ? purs : purs.filter(p=>p.status.toLowerCase()===v);
+        PDF.purchaseReport(filtered, v==='all'?'All Orders':(v==='received'?'Received Only':'Open Orders'));
+
+      } else if (pdfContext === 'gst') {
+        if (v === 'all') {
+          PDF.gstReport(gsts, 'All Filings');
+        } else if (v === 'monthly-current') {
+          PDF.gstMonthlyReport(gsts, null);
+        } else if (v.startsWith('monthly-')) {
+          PDF.gstMonthlyReport(gsts, v.replace('monthly-',''));
+        }
+      }
+      pdfModal.classList.remove('on');
+      showToast('PDF downloaded ✓');
+    } catch(err) {
+      showToast('PDF error: '+err.message, false);
+      console.error(err);
+    }
+    pdfGenBtn.textContent = 'Generate & Download PDF';
+    pdfGenBtn.disabled = false;
+  }, 80);
+};
+
+// Close modal
+$('pdf-modal-close').onclick = $('pdf-modal-cancel').onclick = () => pdfModal.classList.remove('on');
+pdfModal.addEventListener('click', e => { if(e.target===pdfModal) pdfModal.classList.remove('on'); });
+
+// Wire up page buttons
+$('exp-pdf-btn').onclick = () => openPdfModal('expenses');
+$('pur-pdf-btn').onclick = () => openPdfModal('purchases');
+$('gst-pdf-btn').onclick = () => openPdfModal('gst');
 
 /* ─── Init ─── */
 (async()=>{
